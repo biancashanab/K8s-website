@@ -1,0 +1,56 @@
+services:
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: chat-db
+    restart: always
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - chat-network
+    mem_limit: 512m
+    mem_reservation: 256m
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chat-backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DB_URL: jdbc:mysql://db:3306/chat
+      DB_USER: chatuser
+      DB_PASSWORD: chatpassword
+    ports:
+      - "88:8080"
+    networks:
+      - chat-network
+    mem_limit: 512m
+    mem_reservation: 256m
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chat-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "90:80"
+    networks:
+      - chat-network
+    mem_limit: 512m
+    mem_reservation: 256m
+
+networks:
+  chat-network:
+    driver: bridge
+    
+volumes:
+  db-data:

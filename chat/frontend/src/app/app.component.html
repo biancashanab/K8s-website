@@ -1,0 +1,56 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card mt-24 rounded">
+        <div class="card-header" style="background-color: #ADD6D2; color: white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h3>{{ title }}</h3>
+              <small>Logged in as: {{ username }}</small>
+            </div>
+            <button class="btn btn-sm" style="background-color: white; color: #ADD6D2" (click)="loadHistory()">Încarcă mesaje vechi</button>
+          </div>
+        </div>
+        <div class="card-body chat-container" #chatContainer>
+          <div class="messages-container">
+            <div *ngIf="historyLoaded" class="history-divider">
+              <span>Mesaje încărcate din istoric</span>
+            </div>
+            <div *ngFor="let msg of messages" class="message" 
+                 [ngClass]="{
+                   'my-message': msg.username === username,
+                   'history-message': msg.fromHistory,
+                   'system-message': msg.systemMessage || msg.username === 'System'
+                 }">
+              <div class="message-header">
+                <strong>{{ msg.username }}</strong>
+                <small class="text-muted ms-2">{{ msg.timestamp | date:'short' }}</small>
+              </div>
+              <div class="message-body">
+                {{ msg.text }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
+            <div class="input-group">
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Type your message here..." 
+                formControlName="message">
+              <button 
+                class="btn" 
+                type="submit" 
+                [disabled]="chatForm.invalid"
+                style="background-color: #ADD6D2; color: white">
+                Send
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
