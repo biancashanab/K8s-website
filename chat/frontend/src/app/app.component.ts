@@ -25,23 +25,19 @@ export class AppComponent implements OnInit {
     });
   }
   
-  ngOnInit() {
-    // Ask for username when component initializes
+  ngOnInit() 
+  {
     this.username = prompt('Please enter your username:') || 'Anonymous';
     
-    // Connect to WebSocket
     this.webSocketService.connect();
     
-    // Subscribe to incoming messages
     this.webSocketService.getMessages().subscribe(message => {
       try {
         console.log('Received message:', message);
         const messageObj = JSON.parse(message);
         
-        // Verificăm dacă este un mesaj de sistem special
         const isSystemMessage = messageObj.systemMessage === true;
         
-        // Verifică dacă mesajul este deja prezent în listă (să evităm duplicatele)
         const isDuplicate = this.messages.some(msg => 
           msg.username === messageObj.username && 
           msg.text === messageObj.message && 
@@ -49,9 +45,8 @@ export class AppComponent implements OnInit {
           msg.timestamp.getTime() === new Date(messageObj.timestamp).getTime()
         );
         
-        // Procesăm mesajul doar dacă nu e duplicat sau dacă e mesaj de sistem
-        if (!isDuplicate || isSystemMessage) {
-          // Adăugăm mesajul cu o proprietate care indică dacă provine din istorie
+        if (!isDuplicate || isSystemMessage) 
+        {
           const newMessage = {
             username: messageObj.username,
             text: messageObj.message,
@@ -63,7 +58,6 @@ export class AppComponent implements OnInit {
           console.log('Adding message to display:', newMessage);
           this.messages.push(newMessage);
           
-          // Scroll la ultimul mesaj doar pentru mesaje noi, nu la încărcarea istoricului
           if (!newMessage.fromHistory) {
             setTimeout(() => this.scrollToBottom(), 100);
           }
@@ -88,27 +82,22 @@ export class AppComponent implements OnInit {
     }
   }
   
-  // Funcție pentru a încărca mesajele vechi din baza de date
-  loadHistory() {
+  loadHistory() 
+  {
     console.log('Loading message history...');
     
-    // Eliminăm mesajele existente pentru a evita duplicatele când reîncărcăm
     this.messages = [];
     this.historyLoaded = false; // Reset starea istoricului
     
-    // Solicităm serverului să retrimită istoricul
     this.webSocketService.requestHistory();
     
-    // Marăcm faptul că istoricul a fost încărcat cu un timeout mai lung
-    // pentru a ne asigura că toate mesajele au sosit
     setTimeout(() => {
       console.log('Setting historyLoaded=true with', this.messages.length, 'messages');
       this.historyLoaded = true;
       
-      // Verificăm dacă avem mesaje în istoric
-      if (this.messages.length === 0) {
+      if (this.messages.length === 0) 
+      {
         console.log('No messages in history');
-        // Adaugăm un mesaj de sistem pentru a informa utilizatorul
         this.messages.push({
           username: 'System',
           text: 'No message history available. Start a new conversation!',
@@ -120,10 +109,9 @@ export class AppComponent implements OnInit {
       
       // Scroll la ultimul mesaj după ce se încărcă istoricul
       setTimeout(() => this.scrollToBottom(), 100);
-    }, 1500); // Timp mai lung pentru a ne asigura că mesajele au sosit
+    }, 1500);
   }
   
-  // Funcție pentru a derula automat la cel mai recent mesaj
   scrollToBottom(): void {
     try {
       this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
