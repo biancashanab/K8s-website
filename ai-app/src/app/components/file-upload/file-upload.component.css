@@ -1,0 +1,36 @@
+.card-header {
+  background-color: #ADD6D2;
+  color: white;
+}
+
+.form-control {
+  border-radius: 4px;
+  padding: 8px;
+}
+
+input[type="file"] {
+  padding: 8px;
+  border: 1px solid #ced4da;
+  background-color: #f8f9fa;
+}
+
+.spinner-border-sm {
+  margin-right: 8px;
+}
+
+.btn {
+  background-color: #ADD6D2;
+  border-color: #ADD6D2;
+  color: white;
+}
+
+.btn:hover {
+  background-color: #8dc2bd;
+  border-color: #8dc2bd;
+}
+
+.btn:disabled {
+  background-color: #ADD6D2;
+  border-color: #ADD6D2;
+  opacity: 0.65;
+}

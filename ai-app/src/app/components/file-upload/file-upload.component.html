@@ -1,0 +1,45 @@
+<div class="card">
+  <div class="card-header">
+    <h2>Upload File for Entity Extraction</h2>
+  </div>
+  <div class="card-body">
+    <form [formGroup]="uploadForm" (ngSubmit)="onSubmit()">
+      <div class="form-group mb-3">
+        <label for="file">Select a text file to analyze:</label>
+        <input 
+          type="file" 
+          id="file" 
+          class="form-control" 
+          (change)="onFileSelected($event)" 
+          accept=".txt,.pdf,.docx,.doc"
+          [disabled]="isUploading">
+        <small class="form-text text-muted">Supported formats: .txt, .pdf, .doc, .docx</small>
+      </div>
+      
+      <button 
+        type="submit" 
+        class="btn"
+        [disabled]="uploadForm.invalid || isUploading">
+        <span *ngIf="isUploading" class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+        {{ isUploading ? 'Uploading...' : 'Upload and Process' }}
+      </button>
+    </form>
+    
+    <div *ngIf="uploadError" class="alert alert-danger mt-3">
+      {{ uploadError }}
+    </div>
+    
+    <div *ngIf="uploadResult" class="mt-4">
+      <div class="card">
+        <div class="card-header">
+          File Processed Successfully!
+        </div>
+        <div class="card-body">
+          <h5>{{ uploadResult.fileName }}</h5>
+          <p>Uploaded and processed successfully. You can view the extracted entities in the history section.</p>
+          <a routerLink="/history" class="btn">View History</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
