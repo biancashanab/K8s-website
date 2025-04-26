@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cms-db-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cms-db
+  template:
+    metadata:
+      labels:
+        app: cms-db
+    spec:
+      containers:
+      - name: mysql
+        image: localhost:5000/mysql:latest
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "vvveb"
+        - name: MYSQL_DATABASE
+          value: "vvveb"
+        - name: MYSQL_USER
+          value: "vvveb"
+        - name: MYSQL_PASSWORD
+          value: "vvveb"
+        volumeMounts:
+        - mountPath: "/var/lib/mysql"
+          name: cms-db-storage
+      volumes:
+      - name: cms-db-storage
+        persistentVolumeClaim:
+          claimName: cms-db-pvc

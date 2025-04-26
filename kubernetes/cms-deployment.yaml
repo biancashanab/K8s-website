@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cms-deployment
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: cms
+  template:
+    metadata:
+      labels:
+        app: cms
+    spec:
+      containers:
+      - name: cms
+        image: localhost:5000/vvveb-cms:latest
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_HOST
+          value: "cms-db-service"
+        - name: DB_DATABASE
+          value: "vvveb"
+        - name: DB_USER
+          value: "vvveb"
+        - name: DB_PASSWORD
+          value: "vvveb"
+        - name: DB_ENGINE
+          value: "mysqli"
+        volumeMounts:
+        - mountPath: "/var/www/html"
+          name: cms-storage
+      volumes:
+      - name: cms-storage
+        persistentVolumeClaim:
+          claimName: cms-pvc

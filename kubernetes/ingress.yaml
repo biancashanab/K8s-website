@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/backend-protocol: "WS" # Pentru WebSocket
+spec:
+  rules:
+  - host: my-app.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cms-service
+            port:
+              number: 80
+      - path: /chat
+        pathType: Prefix
+        backend:
+          service:
+            name: chat-frontend-service
+            port:
+              number: 90
+      - path: /chat-backend
+        pathType: Prefix
+        backend:
+          service:
+            name: chat-backend-service
+            port:
+              number: 88
+      - path: /ai
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-app-service
+            port:
+              number: 90

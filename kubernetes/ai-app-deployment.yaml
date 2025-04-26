@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-app
+  labels:
+    app: ai-app
+    tier: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-app
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: ai-app
+        tier: frontend
+    spec:
+      containers:
+      - name: ai-app
+        image: localhost:5000/ai-app:latest
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 100
+          name: http
+        env:
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: azure-secret
+              key: AZURE_STORAGE_CONNECTION_STRING
+        - name: AZURE_SQL_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: azure-secret
+              key: AZURE_SQL_CONNECTION_STRING
+        - name: AZURE_ENTITY_EXTRACTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: azure-secret
+              key: AZURE_ENTITY_EXTRACTION_KEY
+        - name: AZURE_ENTITY_EXTRACTION_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: azure-secret
+              key: AZURE_ENTITY_EXTRACTION_ENDPOINT
