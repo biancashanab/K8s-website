@@ -23,16 +23,21 @@ spec:
           valueFrom:
             secretKeyRef:
               name: chat-db-secret
-              key: mysql-database
+              key: MYSQL_DATABASE
         - name: DB_USER
           valueFrom:
             secretKeyRef:
               name: chat-db-secret
-              key: mysql-user
+              key: MYSQL_USER
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: chat-db-secret
-              key: mysql-password
+              key: MYSQL_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: MYSQL_DATABASE
         ports:
-        - containerPort: 8080
+        - containerPort: 88

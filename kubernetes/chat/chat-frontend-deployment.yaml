@@ -14,7 +14,14 @@ spec:
         app: chat-frontend
     spec:
       containers:
-      - name: nginx
-        image: localhost:5000/chat-frontend:latest
-        ports:
-        - containerPort: 80
+        - name: chat-frontend
+          image: localhost:5000/chat-frontend:latest
+          ports:
+            - containerPort: 90
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"

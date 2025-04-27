@@ -27,7 +27,7 @@ services:
       DB_USER: chatuser
       DB_PASSWORD: chatpassword
     ports:
-      - "88:8080"
+      - "88:8080"  # Map external port 88 to internal Tomcat port 8080
     networks:
       - chat-network
     mem_limit: 512m

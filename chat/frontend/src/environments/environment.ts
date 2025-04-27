@@ -1,22 +1,4 @@
-// This file can be replaced during build by using the `fileReplacements` array.
-// `ng build` replaces `environment.ts` with `environment.prod.ts`.
-// The list of file replacements can be found in `angular.json`.
-
 export const environment = {
-  production: false,
-  // Kubernetes service URLs
-  apiUrl: 'http://chat-backend:88',
-  wsUrl: 'ws://chat-backend:88/chat',
-  // Local development URLs (commented out)
-  // apiUrl: 'http://localhost:88',
-  // wsUrl: 'ws://localhost:88/chat'
+  apiUrl: '/api', // Proxied to chat-backend:88 via nginx.conf
+  wsUrl: '/ws'    // Proxied to chat-backend:88/chat via nginx.conf
 };
-
-/*
- * For easier debugging in development mode, you can import the following file
- * to ignore zone related error stack frames such as `zone.run`, `zoneDelegate.invokeTask`.
- *
- * This import should be commented out in production mode because it will have a negative impact
- * on performance if an error is thrown.
- */
-// import 'zone.js/plugins/zone-error';  // Included with Angular CLI.

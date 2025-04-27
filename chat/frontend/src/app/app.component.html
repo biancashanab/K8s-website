@@ -8,7 +8,12 @@
               <h3>{{ title }}</h3>
               <small>Logged in as: {{ username }}</small>
             </div>
-            <button class="btn btn-sm" style="background-color: white; color: #ADD6D2" (click)="loadHistory()">Încarcă mesaje vechi</button>
+            <div>
+              <span *ngIf="!isConnected" class="badge bg-danger me-2">Disconnected</span>
+              <span *ngIf="isConnected" class="badge bg-success me-2">Connected</span>
+              <button class="btn btn-sm" style="background-color: white; color: #ADD6D2" (click)="loadHistory()">Încarcă mesaje vechi</button>
+              <button *ngIf="!isConnected" class="btn btn-sm ms-2" style="background-color: white; color: #ADD6D2" (click)="reconnectWebSocket()">Reconnect</button>
+            </div>
           </div>
         </div>
         <div class="card-body chat-container" #chatContainer>
@@ -43,9 +48,10 @@
               <button 
                 class="btn" 
                 type="submit" 
-                [disabled]="chatForm.invalid"
+                [disabled]="chatForm.invalid || !isConnected"
                 style="background-color: #ADD6D2; color: white">
-                Send
+                <span *ngIf="!isConnected">Reconnecting...</span>
+                <span *ngIf="isConnected">Send</span>
               </button>
             </div>
           </form>

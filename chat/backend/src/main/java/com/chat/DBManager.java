@@ -16,16 +16,38 @@ import org.json.JSONObject;
 public class DBManager {
     
     private static final Logger LOGGER = Logger.getLogger(DBManager.class.getName());
-    private String dbUrl = System.getenv("DB_URL") != null ? System.getenv("DB_URL") : "jdbc:mysql://db:3306/chat";
-    private String dbUser = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : "chatuser";
-    private String dbPassword = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "chatpassword";
     
-    public DBManager() 
-    {
+    // Get database connection parameters from environment variables with fallbacks
+    private String dbUrl = getEnvWithDefault("DB_URL", "jdbc:mysql://db:3306/chat");
+    private String dbUser = getEnvWithDefault("DB_USER", "chatuser");
+    private String dbPassword = getEnvWithDefault("DB_PASSWORD", "chatpassword");
+    
+    // Helper method to get env var with default value
+    private String getEnvWithDefault(String key, String defaultValue) {
+        String value = System.getenv(key);
+        if (value != null && !value.isEmpty()) {
+            return value;
+        }
+        return defaultValue;
+    }
+    
+    public DBManager() {
         try {
+            // Load MySQL JDBC driver
             Class.forName("com.mysql.cj.jdbc.Driver");
+            LOGGER.log(Level.INFO, "MySQL JDBC Driver loaded successfully");
+            LOGGER.log(Level.INFO, "Database connection parameters: URL={0}, User={1}", 
+                       new Object[]{dbUrl, dbUser});
         } catch (ClassNotFoundException e) {
             LOGGER.log(Level.SEVERE, "MySQL JDBC Driver not found", e);
+        }
+        
+        // Test database connection on initialization
+        try (Connection conn = getConnection()) {
+            LOGGER.log(Level.INFO, "Database connection test successful: {0}", 
+                        conn.getMetaData().getURL());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database connection test failed", e);
         }
     }
     
@@ -33,13 +55,11 @@ public class DBManager {
         return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
     }
     
-    public void saveMessage(String username, String message, long timestamp) 
-    {
+    public void saveMessage(String username, String message, long timestamp) {
         String sql = "INSERT INTO messages (username, message, timestamp) VALUES (?, ?, ?)";
         
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) 
-        {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             LOGGER.log(Level.INFO, "Database connection established: " + conn.getMetaData().getURL());
             
@@ -50,23 +70,21 @@ public class DBManager {
             int rowsAffected = stmt.executeUpdate();
             LOGGER.log(Level.INFO, "Message saved to database. Rows affected: " + rowsAffected);
             
-        } 
-        catch (SQLException e) {
+        } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error saving message to database: " + e.getMessage(), e);
         }
     }
     
-    // Returnează toate mesajele din istoric, ordonate cronologic
+    // Return all messages from history, chronologically ordered
     public List<String> getHistory() {
-        return getHistory(150);             // Implicit, limităm la 150 mesaje
+        return getHistory(150);  // Default limit to 150 messages
     }
     
-    /** 
-     * Returnează un număr limitat de mesaje din istoric, ordonate cronologic
-     * @param limit Numărul maxim de mesaje returnate
+    /**
+     * Return a limited number of messages from history, chronologically ordered
+     * @param limit Maximum number of messages to return
      */
-    public List<String> getHistory(int limit) 
-    {
+    public List<String> getHistory(int limit) {
         List<String> messages = new ArrayList<>();
         String sql = "SELECT username, message, timestamp FROM messages ORDER BY timestamp ASC LIMIT ?";
         
@@ -79,8 +97,7 @@ public class DBManager {
             ResultSet rs = stmt.executeQuery();
             
             int messageCount = 0;
-            while (rs.next()) 
-            {
+            while (rs.next()) {
                 JSONObject message = new JSONObject();
                 message.put("username", rs.getString("username"));
                 message.put("message", rs.getString("message"));
@@ -91,22 +108,16 @@ public class DBManager {
             
             LOGGER.log(Level.INFO, "Retrieved " + messageCount + " messages from database");
             
-            // Verificare suplimentară pentru a detecta probleme
-            if (messageCount == 0) 
-            {
-                try 
-                {
-                    Statement checkStmt = conn.createStatement();
-                    ResultSet countRs = checkStmt.executeQuery("SELECT COUNT(*) as count FROM messages");
-
+            // Additional check to detect issues if no messages were found
+            if (messageCount == 0) {
+                try (Statement checkStmt = conn.createStatement();
+                     ResultSet countRs = checkStmt.executeQuery("SELECT COUNT(*) as count FROM messages")) {
+                     
                     if (countRs.next()) {
                         int totalCount = countRs.getInt("count");
                         LOGGER.log(Level.INFO, "Total messages in database: " + totalCount);
                     }
-                    countRs.close();
-                    checkStmt.close();
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     LOGGER.log(Level.SEVERE, "Error checking message count: " + e.getMessage(), e);
                 }
             }

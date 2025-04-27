@@ -2,39 +2,47 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: app-ingress
+  namespace: default
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/backend-protocol: "WS" # Pentru WebSocket
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/websocket-services: "chat-backend"
 spec:
+  ingressClassName: nginx
   rules:
-  - host: my-app.local
+  - host: localhost
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: cms-service
+            name: chat-frontend
             port:
-              number: 80
+              number: 90
       - path: /chat
         pathType: Prefix
         backend:
           service:
-            name: chat-frontend-service
+            name: chat-frontend
             port:
               number: 90
-      - path: /chat-backend
+      - path: /api
         pathType: Prefix
         backend:
           service:
-            name: chat-backend-service
+            name: chat-backend
             port:
               number: 88
-      - path: /ai
+      - path: /ws
         pathType: Prefix
         backend:
           service:
-            name: ai-app-service
+            name: chat-backend
             port:
-              number: 90
+              number: 88

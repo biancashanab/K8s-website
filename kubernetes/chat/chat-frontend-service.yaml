@@ -8,5 +8,5 @@ spec:
     app: chat-frontend
   ports:
   - port: 90
-    targetPort: 80
+    targetPort: 90
   type: ClusterIP
