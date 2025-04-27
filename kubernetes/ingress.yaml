@@ -4,34 +4,30 @@ metadata:
   name: app-ingress
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
-    nginx.ingress.kubernetes.io/websocket-services: "chat-backend"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+    nginx.ingress.kubernetes.io/server-snippet: |
+      access_log /var/log/nginx/access.log;
+      error_log /var/log/nginx/error.log debug;
 spec:
   ingressClassName: nginx
   rules:
   - host: localhost
     http:
       paths:
-      - path: /
-        pathType: Prefix
+      - path: /ws/chat
+        pathType: Exact
         backend:
           service:
-            name: chat-frontend
+            name: chat-backend
             port:
-              number: 90
-      - path: /chat
-        pathType: Prefix
-        backend:
-          service:
-            name: chat-frontend
-            port:
-              number: 90
+              number: 88
       - path: /api
         pathType: Prefix
         backend:
@@ -39,10 +35,10 @@ spec:
             name: chat-backend
             port:
               number: 88
-      - path: /ws
+      - path: /
         pathType: Prefix
         backend:
           service:
-            name: chat-backend
+            name: chat-frontend
             port:
-              number: 88
+              number: 90

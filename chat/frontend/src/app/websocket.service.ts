@@ -13,7 +13,7 @@ export class WebSocketService {
   private maxReconnectAttempts = 5;
   private reconnectInterval = 3000; // 3 seconds
   
-  // WebSocket URL from environment
+  // Use dynamic WebSocket URL
   private wsUrl = environment.wsUrl;
   
   constructor() {

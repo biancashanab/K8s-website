@@ -6,21 +6,23 @@ import javax.websocket.server.ServerEndpointConfig;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 
-// Configurare pentru ChatEndpoint și port
 public class ChatConfig implements ServerApplicationConfig {
+    private static final Logger LOGGER = Logger.getLogger(ChatConfig.class.getName());
 
     @Override
     public Set<ServerEndpointConfig> getEndpointConfigs(Set<Class<? extends Endpoint>> endpointClasses) {
-        // Configurarea portului 88 pentru WebSocket este gestionată în server.xml al Tomcat
+        LOGGER.info("Programmatic WebSocket endpoints scanned: " + endpointClasses);
         return Collections.emptySet();
     }
 
     @Override
     public Set<Class<?>> getAnnotatedEndpointClasses(Set<Class<?>> scanned) {
+        LOGGER.info("Scanned classes: " + scanned);
         Set<Class<?>> endpoints = new HashSet<>();
-        // Adaugare endpoint de ChatEndpoint
         endpoints.add(ChatEndpoint.class);
+        LOGGER.info("Registering WebSocket endpoint: ChatEndpoint at /chat");
         return endpoints;
     }
 }

@@ -17,6 +17,13 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 # Add MySQL JDBC driver
 RUN curl -L https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar -o ${CATALINA_HOME}/lib/mysql-connector-java.jar
 
+# Add JSON library for WebSockets
+RUN curl -L https://repo1.maven.org/maven2/org/json/json/20210307/json-20210307.jar -o ${CATALINA_HOME}/lib/json-20210307.jar
+
+# Add WebSocket API implementation
+RUN curl -L https://repo1.maven.org/maven2/org/apache/tomcat/tomcat-websocket/9.0.50/tomcat-websocket-9.0.50.jar -o ${CATALINA_HOME}/lib/tomcat-websocket-9.0.50.jar
+RUN curl -L https://repo1.maven.org/maven2/org/apache/tomcat/tomcat-websocket-api/9.0.50/tomcat-websocket-api-9.0.50.jar -o ${CATALINA_HOME}/lib/tomcat-websocket-api-9.0.50.jar
+
 # Copy the war file from the build stage
 COPY --from=build /app/target/chat.war webapps/ROOT.war
 
