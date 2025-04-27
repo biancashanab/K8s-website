@@ -11,7 +11,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/mnt/data/chat-db"
+    path: "/var/lib/docker/volumes/chat-db-data/_data"  # Path to Docker volume
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

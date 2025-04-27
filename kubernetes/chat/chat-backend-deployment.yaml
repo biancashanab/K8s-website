@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-backend
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: chat-backend
+  template:
+    metadata:
+      labels:
+        app: chat-backend
+    spec:
+      containers:
+      - name: tomcat
+        image: localhost:5000/chat-backend:latest
+        env:
+        - name: DB_HOST
+          value: chat-db
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: mysql-database
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: mysql-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: mysql-password
+        ports:
+        - containerPort: 8080

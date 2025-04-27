@@ -4,8 +4,12 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:88',
-  wsUrl: 'ws://localhost:88/chat'
+  // Kubernetes service URLs
+  apiUrl: 'http://chat-backend:88',
+  wsUrl: 'ws://chat-backend:88/chat',
+  // Local development URLs (commented out)
+  // apiUrl: 'http://localhost:88',
+  // wsUrl: 'ws://localhost:88/chat'
 };
 
 /*
