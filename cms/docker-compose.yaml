@@ -13,7 +13,7 @@ services:
       - internal
 
   php:
-    image: vvveb/vvvebcms:latest
+    image: cms-test:latest
     environment:
       DB_HOST: db
       DB_DATABASE: vvveb
@@ -21,10 +21,9 @@ services:
       DB_PASSWORD: vvveb
       DB_ENGINE: mysqli #sqlite,pgsql
     volumes:
-      - vvveb-volume:/var/www/html/
       - db:/var/lib/mysql
     ports:
-      - "80:80"
+      - "81:80"
     links:
       - db:mysql
     depends_on:
@@ -34,7 +33,6 @@ services:
 
 
 volumes:
-  vvveb-volume:
   db:
 
 networks:

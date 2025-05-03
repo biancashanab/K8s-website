@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="icon" href="../../favicon.ico">
+  
+
+  <base href="">
+
+  <title>Vvveb - Debug Plugin</title>
+
+  <link href="css/admin.css" rel="stylesheet">
+</head>
+
+
+<body>
+
+  <div id="container">
+
+    <div class="sidebar" data-v-copy-from="index.html,.sidebar">
+    </div>
+
+
+    <div class="main">
+
+      <div class="clearfix top-header" data-v-copy-from="index.html,.top-header">
+
+      </div>
+
+      <form id="settings-form" action="" method="post" class="settings" data-v-product>
+        <input type="hidden" name="action" id="action" value="save">
+        <div class="actions">
+          <div class="float-md-start">
+            <h4 class="text-muted mt-2">
+              <i class="icon-cube-outline"></i>
+              Debug plugin
+            </h4>
+          </div>
+			<a href="{$this.adminPath}index.php?module=plugin/plugins" title="Plugins list"
+					class="btn btn-icon btn-outline-secondary me-2">
+						<i class="la la-arrow-left"></i><span>Plugins list</span>
+			</a>  
+          <button type="submit" href="" class="btn btn-primary btn-icon ms-1" title="Save post">
+            <i class="icon-create-outline"></i> Save settings
+          </button>
+        </div>
+        <div>
+          <div id="main-content">
+
+            <div class="notifications" data-v-notifications data-v-copy-from="index.html,.notifications"></div>
+
+            <div class="content clearfix settings">
+
+              <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Home</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Profile</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab" aria-controls="contact" aria-selected="false">Contact</button>
+                </li>
+              </ul>
+
+
+
+              <div class="tab-content" id="myTabContent">
+                <div class="tab-pane show active p-3" id="home" role="tabpanel" aria-labelledby="home-tab">
+
+
+
+
+                  <div class="mb-3 row">
+                    <label for="input-site-title" class="col-sm-2 col-form-label">Site title</label>
+                    <div class="col-sm-10">
+                      <input type="text" class="form-control" id="input-site-title" placeholder="Title" name="settings[site-title]">
+                    </div>
+                  </div>
+                  <div class="mb-3 row">
+                    <label for="input-site-title" class="col-sm-2 col-form-label">Site description</label>
+                    <div class="col-sm-10">
+                      <input type="text" class="form-control" id="input-site-title" placeholder="Description" name="settings[site-description]">
+                    </div>
+                  </div>
+                  <div class="mb-3 row">
+                    <label for="input-site-theme" class="col-sm-2 col-form-label">Theme</label>
+                    <div class="col-sm-10">
+                      <input type="text" class="form-control" id="input-site-theme" placeholder="Theme" name="settings[theme]">
+                    </div>
+                  </div>
+
+
+
+                </div>
+                <div class="tab-pane" id="profile" role="tabpanel" aria-labelledby="profile-tab">...</div>
+                <div class="tab-pane" id="contact" role="tabpanel" aria-labelledby="contact-tab">...</div>
+              </div>
+
+
+            </div>
+          </div>
+      </form>
+
+    </div>
+  </div>
+
+
+  <script src="js/popper.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script id="admin-js" type="module" src="../../js/admin.js"></script>
+  <script type="module" src="../../js/admin.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,26 @@
+body > .site-contact-title {
+	background-color: #f7f9ff;
+	float: none;
+	padding-left: 50px;
+	padding-right: 75px;
+}
+
+.site-contact > .container > .row > .col-lg-5 {
+	width: auto;
+}
+
+#AI-header {
+	width: 85%;
+	text-align: center;
+	display: block;
+	top: auto;
+}
+
+#Chat-header {
+	width: 40%;
+}
+
+.site-contact > .container > .row > div {
+	padding-left: 0px;
+}
+

@@ -1,0 +1,252 @@
+#debug-bar {
+	position:fixed;
+	bottom:0;
+	left:0;
+	width:100%;
+	background:#fff;
+	z-index:100000;
+	border-top:1px solid #eee;
+}
+
+.tabs {
+	height:32px;
+}
+
+
+#debug-toggle-label {
+	cursor:pointer;
+	padding:3px 7px;
+	position: absolute;
+	right: 49px;
+	top: 0px;
+	transform:rotate(90deg);	
+}
+
+#debug-toggle-label:hover {
+	background-color:#fff;
+}
+
+
+#debug-toggle {
+	display:none;
+}
+
+#debug-toggle:checked ~ .tabs {
+	height:auto;
+}
+
+#debug-logo {
+	position: absolute;
+	right: 7px;
+	top: 3px;
+}
+
+/**
+ * Tabs
+ */
+#debug-bar .tabs {
+	display: flex;
+	flex-wrap: wrap;
+	background:#eee;
+}
+
+#debug-bar .tabs > label {
+	background:#fff;
+}
+
+#debug-bar .tabs > label {
+	order: 1; // Put the labels first
+	display: block;
+	padding: 0.3rem 2rem;
+	margin-right: 0.1rem;
+	cursor: pointer;
+	background: #eee;
+	transition: background ease 0.2s;
+	font-size:12px;
+}
+#debug-bar .tabs .tab {
+  order: 99; // Put the tabs last
+  flex-grow: 1;
+	width: 100%;
+	display: none;
+  padding-top: 1rem;
+  background: #fff;
+  max-height:300px;
+  min-height:300px;
+  overflow-x:auto;
+}
+#debug-bar .tabs input[type="radio"] {
+	display: none;
+}
+#debug-bar .tabs input[type="radio"]:checked + label {
+	background: #fff;
+}
+#debug-bar .tabs input[type="radio"]:checked + label + .tab {
+	display: block;
+}
+
+@media (max-width: 45em) {
+  #debug-bar .tabs .tab,
+  #debug-bar .tabs label {
+    order: initial;
+  }
+  #debug-bar .tabs label {
+    width: 100%;
+    margin-right: 0;
+    margin-top: 0.2rem;
+  }
+}
+
+
+#debug-bar .tab ul {
+	list-style:none;
+	padding:0.2rem 0.5rem;
+}
+
+#debug-bar .tab > ul {
+	margin:0;
+}
+
+#debug-bar .tab > ul > li {
+	border-bottom:1px solid #ddd;
+}
+
+#debug-bar .tab > ul > li:hover {
+	background:#ffff0022;
+}
+
+
+#debug-bar .tree ol li  div {
+    padding: 1rem;
+    margin-left:1rem;
+    border-bottom:1px solid #eee;
+}
+
+/* sql */
+
+#debug-bar .tab.tree.sql ol > li label,
+#debug-bar .tab.tree.sql ol > li div  {
+	display:inline-block;
+}
+
+#debug-bar .tab.tree.sql ol > li label {
+	margin-right:1rem;
+	font-weight:bold;
+}
+
+#debug-bar .tab.tree.sql ol > li div { 
+	margin:0;
+	padding:0;
+	border:none;
+    white-space: pre;
+}
+
+#debug-bar .tab.tree.sql > ol > li > ol > li > div {
+	display:block;
+	padding:0.5rem;
+	border-top:1px solid #eee;
+    white-space: pre;
+}
+
+
+
+/* CSS Tree menu styles */
+.tree {
+  width: 100%;
+  padding: 0; }
+  .tree > ol {
+    padding: 0rem 0 0 0rem;
+    margin: 0;
+    font-size: 12px;
+    color: #555; }
+    .tree > ol li {
+      position: relative;
+      margin-bottom: 0.3rem;
+      list-style: none;
+      color: #555;
+      overflow: hidden; }
+      .tree > ol li:hover {
+        color: #007bff; }
+    .tree > ol li.file {
+      border: 1px solid transparent; }
+      .tree > ol li.file:hover .file-actions {
+        display: block; }
+      .tree > ol li.file > label {
+        background-image: url(../../../../js/vvvebjs/icons/file.svg);
+        background-position: 8px 4px;
+        background-size: 21px 21px;
+        background-repeat: no-repeat;
+        cursor: pointer;
+        display: block;
+        padding-left: 35px;
+        margin: 0;
+        font-size: 12px;
+        line-height: 28px;
+        max-height: 2rem; }
+      .tree > ol li.file .file-actions {
+        display: none;
+        position: absolute;
+        top: -1px;
+        right: 5px; }
+        .tree > ol li.file .file-actions .btn {
+          padding: 0.25rem 0.3rem;
+          line-height: 1;
+          border-radius: 4px; }
+    .tree > ol li.page > label {
+      background-image: url(../../../../js/vvvebjs/icons/panel.svg); }
+    .tree > ol li input {
+      position: absolute;
+      left: 0;
+      margin-left: 0;
+      opacity: 0;
+      z-index: 2;
+      cursor: pointer;
+      height: 2em;
+      width: 2em;
+      top: 0; }
+      .tree > ol li input + ol {
+        background: url(../../../../js/vvvebjs/icons/arrow-right.svg) 5px 0.3rem no-repeat;
+        background-size: 12px 12px;
+        margin: -1.9rem 0 0 0rem;
+        padding: 2rem 0 0 2rem;
+        height: 0; }
+        .tree > ol li input + ol > li {
+          display: none;
+          margin-left: -14px !important;
+          padding-left: 1px; }
+    .tree > ol li label {
+      background: url(../../../../js/vvvebjs/icons/folder.svg) 24px 1px no-repeat;
+      background-size: 24px 24px;
+      cursor: pointer;
+      display: block;
+      padding-left: 56px;
+      margin: 0px;
+      font-size: 12px;
+      line-height: 28px;
+      /*
+			p {
+				margin: 0;
+				display:none;
+				color: #999;
+				margin-left: 1rem;
+			}
+			
+			&:hover {
+				p {
+					display: inline-block;				
+				}
+			}
+			*/ }
+    .tree > ol li input:checked + ol {
+      background: url(../../../../js/vvvebjs/icons/arrow-down.svg) 5px 0.1rem no-repeat;
+      background-size: 12px 12px;
+      margin: -1.8em 0 0 0rem;
+      padding: 2rem 0 0 3rem;
+      height: auto; }
+      .tree > ol li input:checked + ol > li {
+        display: block;
+        margin: 0 0 0.5em;
+        /* 2px */ }
+      .tree > ol li input:checked + ol > li:last-child {
+        margin: 0 0 0.7em;
+        /* 1px */ }

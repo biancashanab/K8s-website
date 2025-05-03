@@ -1,0 +1,741 @@
+./azure-secret.yaml: apiVersion: v1
+./azure-secret.yaml: kind: Secret
+./azure-secret.yaml: metadata:
+./azure-secret.yaml:   name: azure-secret
+./azure-secret.yaml: type: Opaque
+./azure-secret.yaml: stringData:
+./azure-secret.yaml:   AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=https;AccountName=mystorageaccount;AccountKey=mykey;EndpointSuffix=core.windows.net"
+./azure-secret.yaml:   AZURE_SQL_CONNECTION_STRING: "Server=tcp:myserver.database.windows.net,1433;Initial Catalog=mydb;Persist Security Info=False;User ID=myadmin;Password=mypassword;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+./azure-secret.yaml:   AZURE_ENTITY_EXTRACTION_KEY: "my-entity-extraction-key"
+./azure-secret.yaml:   AZURE_ENTITY_EXTRACTION_ENDPOINT: "https://my-entity-extraction.cognitiveservices.azure.com/"
+./cms-db-deployment.yaml: apiVersion: apps/v1
+./cms-db-deployment.yaml: kind: Deployment
+./cms-db-deployment.yaml: metadata:
+./cms-db-deployment.yaml:   name: cms-db-deployment
+./cms-db-deployment.yaml: spec:
+./cms-db-deployment.yaml:   replicas: 1
+./cms-db-deployment.yaml:   selector:
+./cms-db-deployment.yaml:     matchLabels:
+./cms-db-deployment.yaml:       app: cms-db
+./cms-db-deployment.yaml:   template:
+./cms-db-deployment.yaml:     metadata:
+./cms-db-deployment.yaml:       labels:
+./cms-db-deployment.yaml:         app: cms-db
+./cms-db-deployment.yaml:     spec:
+./cms-db-deployment.yaml:       containers:
+./cms-db-deployment.yaml:       - name: mysql
+./cms-db-deployment.yaml:         image: localhost:5000/mysql:latest
+./cms-db-deployment.yaml:         resources:
+./cms-db-deployment.yaml:           limits:
+./cms-db-deployment.yaml:             memory: "512Mi"
+./cms-db-deployment.yaml:             cpu: "500m"
+./cms-db-deployment.yaml:           requests:
+./cms-db-deployment.yaml:             memory: "256Mi"
+./cms-db-deployment.yaml:             cpu: "250m"
+./cms-db-deployment.yaml:         ports:
+./cms-db-deployment.yaml:         - containerPort: 3306
+./cms-db-deployment.yaml:         env:
+./cms-db-deployment.yaml:         - name: MYSQL_ROOT_PASSWORD
+./cms-db-deployment.yaml:           value: "vvveb"
+./cms-db-deployment.yaml:         - name: MYSQL_DATABASE
+./cms-db-deployment.yaml:           value: "vvveb"
+./cms-db-deployment.yaml:         - name: MYSQL_USER
+./cms-db-deployment.yaml:           value: "vvveb"
+./cms-db-deployment.yaml:         - name: MYSQL_PASSWORD
+./cms-db-deployment.yaml:           value: "vvveb"
+./cms-db-deployment.yaml:         volumeMounts:
+./cms-db-deployment.yaml:         - mountPath: "/var/lib/mysql"
+./cms-db-deployment.yaml:           name: cms-db-storage
+./cms-db-deployment.yaml:       volumes:
+./cms-db-deployment.yaml:       - name: cms-db-storage
+./cms-db-deployment.yaml:         persistentVolumeClaim:
+./cms-db-deployment.yaml:           claimName: cms-db-pvc
+./test_connectivity.sh: #!/bin/bash
+./test_connectivity.sh: # kind-registry-debug.sh
+./test_connectivity.sh: echo "=== Testing Registry Connection in Kind ==="
+./test_connectivity.sh: echo -e "\n1. Testing registry from host:"
+./test_connectivity.sh: curl -s http://localhost:5000/v2/_catalog || echo "Failed to connect to registry from host"
+./test_connectivity.sh: echo -e "\n2. Creating debug pod in Kubernetes..."
+./test_connectivity.sh: cat <<EOF | kubectl apply -f -
+./test_connectivity.sh: apiVersion: v1
+./test_connectivity.sh: kind: Pod
+./test_connectivity.sh: metadata:
+./test_connectivity.sh:   name: registry-debug
+./test_connectivity.sh: spec:
+./test_connectivity.sh:   containers:
+./test_connectivity.sh:   - name: registry-debug
+./test_connectivity.sh:     image: curlimages/curl
+./test_connectivity.sh:     command: ["sleep", "3600"]
+./test_connectivity.sh: echo -e "\nWaiting for debug pod to start..."
+./test_connectivity.sh: kubectl wait --for=condition=Ready pod/registry-debug --timeout=60s
+./test_connectivity.sh: echo -e "\n3. Testing registry connection from inside Kind:"
+./test_connectivity.sh: kubectl exec registry-debug -- curl -s http://registry:5000/v2/_catalog || echo "Failed to connect to registry from Kind"
+./test_connectivity.sh: echo -e "\n4. Listing available images in registry:"
+./test_connectivity.sh: curl -s http://localhost:5000/v2/_catalog | grep -o '"[^"]*"' | tr -d '"' | while read repo; do
+./test_connectivity.sh:   if [ ! -z "$repo" ]; then
+./test_connectivity.sh:     echo "Repository: $repo"
+./test_connectivity.sh:     curl -s http://localhost:5000/v2/$repo/tags/list | grep -o '"tags":\[[^]]*\]' | grep -o '"[^"]*"' | grep -v tags | tr -d '"' | while read tag; do
+./test_connectivity.sh:       echo "  - $repo:$tag"
+./test_connectivity.sh:     done
+./test_connectivity.sh:   fi
+./test_connectivity.sh: done
+./test_connectivity.sh: echo -e "\n5. Checking for image pull errors in pods:"
+./test_connectivity.sh: kubectl get pods --all-namespaces | grep -v Running | grep -v Completed
+./test_connectivity.sh: echo -e "\n6. Testing image pull directly:"
+./test_connectivity.sh: cat <<EOF | kubectl apply -f -
+./test_connectivity.sh: apiVersion: v1
+./test_connectivity.sh: kind: Pod
+./test_connectivity.sh: metadata:
+./test_connectivity.sh:   name: image-pull-test
+./test_connectivity.sh: spec:
+./test_connectivity.sh:   containers:
+./test_connectivity.sh:   - name: test-container
+./test_connectivity.sh:     image: registry:5000/ai-app:latest
+./test_connectivity.sh:   restartPolicy: Never
+./test_connectivity.sh: echo -e "\nWatching image-pull-test pod status:"
+./test_connectivity.sh: kubectl get pod image-pull-test -w &
+./test_connectivity.sh: watch_pid=$!
+./test_connectivity.sh: sleep 10
+./test_connectivity.sh: kill $watch_pid
+./test_connectivity.sh: echo -e "\nChecking image-pull-test pod events:"
+./test_connectivity.sh: kubectl describe pod image-pull-test | grep -A 10 Events:
+./test_connectivity.sh: echo -e "\n=== Registry connection debugging complete ==="
+./test_connectivity.sh: echo "Debug pod 'registry-debug' has been created for further testing."
+./test_connectivity.sh: echo "Run 'kubectl exec -it registry-debug -- sh' to access it."
+./test_connectivity.sh: echo "When finished, run the following to clean up:"
+./test_connectivity.sh: echo "kubectl delete pod registry-debug image-pull-test"
+./create_cluster.sh: #!/bin/bash
+./create_cluster.sh: # setup-kind-with-registry.sh
+./create_cluster.sh: kind delete cluster --name k8s-website
+./create_cluster.sh: docker rm --force registry
+./create_cluster.sh: # Create a kind network
+./create_cluster.sh: docker network create kind
+./create_cluster.sh: # Run a local registry
+./create_cluster.sh: docker run -d --name registry --network kind -p 5000:5000 registry:2
+./create_cluster.sh: # Get the registry's IP
+./create_cluster.sh: REGISTRY_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry)
+./create_cluster.sh: # Create a kind configuration file with registry mirror
+./create_cluster.sh: cat > kind-config.yaml <<EOF
+./create_cluster.sh: kind: Cluster
+./create_cluster.sh: apiVersion: kind.x-k8s.io/v1alpha4
+./create_cluster.sh: containerdConfigPatches:
+./create_cluster.sh: - |-
+./create_cluster.sh:   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
+./create_cluster.sh:     endpoint = ["http://registry:5000"]
+./create_cluster.sh: # Create the kind cluster
+./create_cluster.sh: kind create cluster --config kind-config.yaml
+./create_cluster.sh: # Create a ConfigMap to point to the registry
+./create_cluster.sh: cat <<EOF | kubectl apply -f -
+./create_cluster.sh: apiVersion: v1
+./create_cluster.sh: kind: ConfigMap
+./create_cluster.sh: metadata:
+./create_cluster.sh:   name: local-registry-hosting
+./create_cluster.sh:   namespace: kube-public
+./create_cluster.sh: data:
+./create_cluster.sh:   localRegistryHosting.v1: |
+./create_cluster.sh:     host: "localhost:5000"
+./create_cluster.sh:     help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
+./create_cluster.sh: echo "Kind cluster with registry setup complete!"
+./create_cluster.sh: echo "Registry is available at: localhost:5000 (host) and localhost:5000 (from cluster)"
+./chat/chat-db-secret.yaml: apiVersion: v1
+./chat/chat-db-secret.yaml: kind: Secret
+./chat/chat-db-secret.yaml: metadata:
+./chat/chat-db-secret.yaml:   name: chat-db-secret
+./chat/chat-db-secret.yaml:   namespace: default
+./chat/chat-db-secret.yaml: type: Opaque
+./chat/chat-db-secret.yaml: data:
+./chat/chat-db-secret.yaml:   MYSQL_ROOT_PASSWORD: Y2hhdHBhc3N3b3Jk
+./chat/chat-db-secret.yaml:   MYSQL_USER: Y2hhdHVzZXIK
+./chat/chat-db-secret.yaml:   MYSQL_PASSWORD: Y2hhdHBhc3N3b3JkCg==
+./chat/chat-db-secret.yaml:   MYSQL_DATABASE: Y2hhdAo=
+./chat/chat-db-pvc.yaml: apiVersion: v1
+./chat/chat-db-pvc.yaml: kind: PersistentVolume
+./chat/chat-db-pvc.yaml: metadata:
+./chat/chat-db-pvc.yaml:   name: chat-db-pv
+./chat/chat-db-pvc.yaml:   labels:
+./chat/chat-db-pvc.yaml:     type: local
+./chat/chat-db-pvc.yaml: spec:
+./chat/chat-db-pvc.yaml:   storageClassName: manual
+./chat/chat-db-pvc.yaml:   capacity:
+./chat/chat-db-pvc.yaml:     storage: 1Gi
+./chat/chat-db-pvc.yaml:   accessModes:
+./chat/chat-db-pvc.yaml:     - ReadWriteOnce
+./chat/chat-db-pvc.yaml:   hostPath:
+./chat/chat-db-pvc.yaml:     path: "/var/lib/docker/volumes/chat-db-data/_data"  # Path to Docker volume
+./chat/chat-db-pvc.yaml: apiVersion: v1
+./chat/chat-db-pvc.yaml: kind: PersistentVolumeClaim
+./chat/chat-db-pvc.yaml: metadata:
+./chat/chat-db-pvc.yaml:   name: chat-db-pvc
+./chat/chat-db-pvc.yaml: spec:
+./chat/chat-db-pvc.yaml:   storageClassName: manual
+./chat/chat-db-pvc.yaml:   accessModes:
+./chat/chat-db-pvc.yaml:     - ReadWriteOnce
+./chat/chat-db-pvc.yaml:   resources:
+./chat/chat-db-pvc.yaml:     requests:
+./chat/chat-db-pvc.yaml:       storage: 1Gi
+./chat/chat-backend-service.yaml: apiVersion: v1
+./chat/chat-backend-service.yaml: kind: Service
+./chat/chat-backend-service.yaml: metadata:
+./chat/chat-backend-service.yaml:   name: chat-backend
+./chat/chat-backend-service.yaml:   namespace: default
+./chat/chat-backend-service.yaml: spec:
+./chat/chat-backend-service.yaml:   selector:
+./chat/chat-backend-service.yaml:     app: chat-backend
+./chat/chat-backend-service.yaml:   ports:
+./chat/chat-backend-service.yaml:   - port: 88
+./chat/chat-backend-service.yaml:     targetPort: 88
+./chat/chat-backend-service.yaml:   type: ClusterIP
+./chat/chat-db-deployment.yaml: apiVersion: apps/v1
+./chat/chat-db-deployment.yaml: kind: Deployment
+./chat/chat-db-deployment.yaml: metadata:
+./chat/chat-db-deployment.yaml:   name: chat-db
+./chat/chat-db-deployment.yaml:   labels:
+./chat/chat-db-deployment.yaml:     app: chat
+./chat/chat-db-deployment.yaml:     tier: db
+./chat/chat-db-deployment.yaml: spec:
+./chat/chat-db-deployment.yaml:   selector:
+./chat/chat-db-deployment.yaml:     matchLabels:
+./chat/chat-db-deployment.yaml:       app: chat
+./chat/chat-db-deployment.yaml:       tier: db
+./chat/chat-db-deployment.yaml:   strategy:
+./chat/chat-db-deployment.yaml:     type: Recreate
+./chat/chat-db-deployment.yaml:   template:
+./chat/chat-db-deployment.yaml:     metadata:
+./chat/chat-db-deployment.yaml:       labels:
+./chat/chat-db-deployment.yaml:         app: chat
+./chat/chat-db-deployment.yaml:         tier: db
+./chat/chat-db-deployment.yaml:     spec:
+./chat/chat-db-deployment.yaml:       containers:
+./chat/chat-db-deployment.yaml:       - image: localhost:5000/chat-db:latest
+./chat/chat-db-deployment.yaml:         name: chat-db
+./chat/chat-db-deployment.yaml:         resources:
+./chat/chat-db-deployment.yaml:           limits:
+./chat/chat-db-deployment.yaml:             memory: "512Mi"
+./chat/chat-db-deployment.yaml:             cpu: "500m"
+./chat/chat-db-deployment.yaml:           requests:
+./chat/chat-db-deployment.yaml:             memory: "256Mi"
+./chat/chat-db-deployment.yaml:             cpu: "250m"
+./chat/chat-db-deployment.yaml:         env:
+./chat/chat-db-deployment.yaml:         - name: MYSQL_DATABASE
+./chat/chat-db-deployment.yaml:           valueFrom:
+./chat/chat-db-deployment.yaml:             secretKeyRef:
+./chat/chat-db-deployment.yaml:               name: chat-db-secret
+./chat/chat-db-deployment.yaml:               key: MYSQL_DATABASE
+./chat/chat-db-deployment.yaml:         - name: MYSQL_USER
+./chat/chat-db-deployment.yaml:           valueFrom:
+./chat/chat-db-deployment.yaml:             secretKeyRef:
+./chat/chat-db-deployment.yaml:               name: chat-db-secret
+./chat/chat-db-deployment.yaml:               key: MYSQL_USER
+./chat/chat-db-deployment.yaml:         - name: MYSQL_PASSWORD
+./chat/chat-db-deployment.yaml:           valueFrom:
+./chat/chat-db-deployment.yaml:             secretKeyRef:
+./chat/chat-db-deployment.yaml:               name: chat-db-secret
+./chat/chat-db-deployment.yaml:               key: MYSQL_PASSWORD
+./chat/chat-db-deployment.yaml:         - name: MYSQL_ROOT_PASSWORD
+./chat/chat-db-deployment.yaml:           valueFrom:
+./chat/chat-db-deployment.yaml:             secretKeyRef:
+./chat/chat-db-deployment.yaml:               name: chat-db-secret
+./chat/chat-db-deployment.yaml:               key: MYSQL_ROOT_PASSWORD
+./chat/chat-db-deployment.yaml:         ports:
+./chat/chat-db-deployment.yaml:         - containerPort: 3306
+./chat/chat-db-deployment.yaml:           name: mysql
+./chat/chat-db-deployment.yaml:         volumeMounts:
+./chat/chat-db-deployment.yaml:         - name: chat-db-persistent-storage
+./chat/chat-db-deployment.yaml:           mountPath: /var/lib/mysql
+./chat/chat-db-deployment.yaml:       volumes:
+./chat/chat-db-deployment.yaml:       - name: chat-db-persistent-storage
+./chat/chat-db-deployment.yaml:         persistentVolumeClaim:
+./chat/chat-db-deployment.yaml:           claimName: chat-db-pvc
+./chat/chat-backend-deployment.yaml: apiVersion: apps/v1
+./chat/chat-backend-deployment.yaml: kind: Deployment
+./chat/chat-backend-deployment.yaml: metadata:
+./chat/chat-backend-deployment.yaml:   name: chat-backend
+./chat/chat-backend-deployment.yaml:   namespace: default
+./chat/chat-backend-deployment.yaml: spec:
+./chat/chat-backend-deployment.yaml:   replicas: 3
+./chat/chat-backend-deployment.yaml:   selector:
+./chat/chat-backend-deployment.yaml:     matchLabels:
+./chat/chat-backend-deployment.yaml:       app: chat-backend
+./chat/chat-backend-deployment.yaml:   template:
+./chat/chat-backend-deployment.yaml:     metadata:
+./chat/chat-backend-deployment.yaml:       labels:
+./chat/chat-backend-deployment.yaml:         app: chat-backend
+./chat/chat-backend-deployment.yaml:     spec:
+./chat/chat-backend-deployment.yaml:       containers:
+./chat/chat-backend-deployment.yaml:       - name: tomcat
+./chat/chat-backend-deployment.yaml:         image: localhost:5000/chat-backend:latest
+./chat/chat-backend-deployment.yaml:         env:
+./chat/chat-backend-deployment.yaml:         - name: DB_HOST
+./chat/chat-backend-deployment.yaml:           value: chat-db
+./chat/chat-backend-deployment.yaml:         - name: DB_NAME
+./chat/chat-backend-deployment.yaml:           valueFrom:
+./chat/chat-backend-deployment.yaml:             secretKeyRef:
+./chat/chat-backend-deployment.yaml:               name: chat-db-secret
+./chat/chat-backend-deployment.yaml:               key: MYSQL_DATABASE
+./chat/chat-backend-deployment.yaml:         - name: DB_USER
+./chat/chat-backend-deployment.yaml:           valueFrom:
+./chat/chat-backend-deployment.yaml:             secretKeyRef:
+./chat/chat-backend-deployment.yaml:               name: chat-db-secret
+./chat/chat-backend-deployment.yaml:               key: MYSQL_USER
+./chat/chat-backend-deployment.yaml:         - name: DB_PASSWORD
+./chat/chat-backend-deployment.yaml:           valueFrom:
+./chat/chat-backend-deployment.yaml:             secretKeyRef:
+./chat/chat-backend-deployment.yaml:               name: chat-db-secret
+./chat/chat-backend-deployment.yaml:               key: MYSQL_PASSWORD
+./chat/chat-backend-deployment.yaml:         - name: MYSQL_DATABASE
+./chat/chat-backend-deployment.yaml:           valueFrom:
+./chat/chat-backend-deployment.yaml:             secretKeyRef:
+./chat/chat-backend-deployment.yaml:               name: chat-db-secret
+./chat/chat-backend-deployment.yaml:               key: MYSQL_DATABASE
+./chat/chat-backend-deployment.yaml:         ports:
+./chat/chat-backend-deployment.yaml:         - containerPort: 88
+./chat/chat-frontend-deployment.yaml: apiVersion: apps/v1
+./chat/chat-frontend-deployment.yaml: kind: Deployment
+./chat/chat-frontend-deployment.yaml: metadata:
+./chat/chat-frontend-deployment.yaml:   name: chat-frontend
+./chat/chat-frontend-deployment.yaml:   namespace: default
+./chat/chat-frontend-deployment.yaml: spec:
+./chat/chat-frontend-deployment.yaml:   replicas: 1
+./chat/chat-frontend-deployment.yaml:   selector:
+./chat/chat-frontend-deployment.yaml:     matchLabels:
+./chat/chat-frontend-deployment.yaml:       app: chat-frontend
+./chat/chat-frontend-deployment.yaml:   template:
+./chat/chat-frontend-deployment.yaml:     metadata:
+./chat/chat-frontend-deployment.yaml:       labels:
+./chat/chat-frontend-deployment.yaml:         app: chat-frontend
+./chat/chat-frontend-deployment.yaml:     spec:
+./chat/chat-frontend-deployment.yaml:       containers:
+./chat/chat-frontend-deployment.yaml:         - name: chat-frontend
+./chat/chat-frontend-deployment.yaml:           image: localhost:5000/chat-frontend:latest
+./chat/chat-frontend-deployment.yaml:           ports:
+./chat/chat-frontend-deployment.yaml:             - containerPort: 90
+./chat/chat-frontend-deployment.yaml:           resources:
+./chat/chat-frontend-deployment.yaml:             requests:
+./chat/chat-frontend-deployment.yaml:               memory: "64Mi"
+./chat/chat-frontend-deployment.yaml:               cpu: "50m"
+./chat/chat-frontend-deployment.yaml:             limits:
+./chat/chat-frontend-deployment.yaml:               memory: "128Mi"
+./chat/chat-frontend-deployment.yaml:               cpu: "100m"
+./chat/chat-frontend-service.yaml: apiVersion: v1
+./chat/chat-frontend-service.yaml: kind: Service
+./chat/chat-frontend-service.yaml: metadata:
+./chat/chat-frontend-service.yaml:   name: chat-frontend
+./chat/chat-frontend-service.yaml:   namespace: default
+./chat/chat-frontend-service.yaml: spec:
+./chat/chat-frontend-service.yaml:   selector:
+./chat/chat-frontend-service.yaml:     app: chat-frontend
+./chat/chat-frontend-service.yaml:   ports:
+./chat/chat-frontend-service.yaml:   - port: 90
+./chat/chat-frontend-service.yaml:     targetPort: 90
+./chat/chat-frontend-service.yaml:   type: ClusterIP
+./chat/chat-db-service.yaml: apiVersion: v1
+./chat/chat-db-service.yaml: kind: Service
+./chat/chat-db-service.yaml: metadata:
+./chat/chat-db-service.yaml:   name: chat-db
+./chat/chat-db-service.yaml:   labels:
+./chat/chat-db-service.yaml:     app: chat
+./chat/chat-db-service.yaml:     tier: db
+./chat/chat-db-service.yaml: spec:
+./chat/chat-db-service.yaml:   ports:
+./chat/chat-db-service.yaml:   - port: 3306
+./chat/chat-db-service.yaml:     targetPort: 3306
+./chat/chat-db-service.yaml:   selector:
+./chat/chat-db-service.yaml:     app: chat
+./chat/chat-db-service.yaml:     tier: db
+./debug.sh: #!/bin/bash
+./debug.sh: # debug-websocket.sh - Script to debug WebSocket connections in Kubernetes
+./debug.sh: # Set colors for better readability
+./debug.sh: GREEN='\033[0;32m'
+./debug.sh: BLUE='\033[0;34m'
+./debug.sh: RED='\033[0;31m'
+./debug.sh: YELLOW='\033[1;33m'
+./debug.sh: NC='\033[0m' # No Color
+./debug.sh: echo -e "${BLUE}========== WebSocket Connection Debugging ==========${NC}"
+./debug.sh: # Check if frontend pods are running
+./debug.sh: echo -e "${BLUE}Checking frontend pods:${NC}"
+./debug.sh: kubectl get pods -l app=chat-frontend
+./debug.sh: # Check if backend pods are running
+./debug.sh: echo -e "${BLUE}Checking backend pods:${NC}"
+./debug.sh: kubectl get pods -l app=chat-backend
+./debug.sh: # Check services
+./debug.sh: echo -e "${BLUE}Checking services:${NC}"
+./debug.sh: kubectl get services | grep chat
+./debug.sh: # Check ingress
+./debug.sh: echo -e "${BLUE}Checking ingress:${NC}"
+./debug.sh: kubectl get ingress
+./debug.sh: kubectl describe ingress app-ingress
+./debug.sh: # Check ingress controller pod
+./debug.sh: echo -e "${BLUE}Checking ingress controller:${NC}"
+./debug.sh: kubectl get pods -n ingress-nginx
+./debug.sh: # Create a test pod to check connectivity
+./debug.sh: echo -e "${BLUE}Creating test pod to check connectivity:${NC}"
+./debug.sh: cat <<EOF | kubectl apply -f -
+./debug.sh: apiVersion: v1
+./debug.sh: kind: Pod
+./debug.sh: metadata:
+./debug.sh:   name: websocket-debug
+./debug.sh: spec:
+./debug.sh:   containers:
+./debug.sh:   - name: websocket-debug
+./debug.sh:     image: nginx:alpine
+./debug.sh:     command: ["/bin/sh", "-c", "apk add --no-cache curl && while true; do sleep 30; done"]
+./debug.sh: # Wait for the pod to be ready
+./debug.sh: echo "Waiting for debug pod to be ready..."
+./debug.sh: kubectl wait --for=condition=Ready pod/websocket-debug --timeout=60s
+./debug.sh: echo -e "${BLUE}Testing HTTP connectivity from debug pod:${NC}"
+./debug.sh: kubectl exec websocket-debug -- curl -v http://chat-backend:88 || echo -e "${YELLOW}Could not connect to backend HTTP${NC}"
+./debug.sh: kubectl exec websocket-debug -- curl -v http://chat-frontend:90 || echo -e "${YELLOW}Could not connect to frontend HTTP${NC}"
+./debug.sh: echo -e "${BLUE}Testing DNS resolution:${NC}"
+./debug.sh: kubectl exec websocket-debug -- nslookup chat-backend || echo -e "${YELLOW}Could not resolve chat-backend${NC}"
+./debug.sh: kubectl exec websocket-debug -- nslookup chat-frontend || echo -e "${YELLOW}Could not resolve chat-frontend${NC}"
+./debug.sh: kubectl exec websocket-debug -- nslookup chat-db || echo -e "${YELLOW}Could not resolve chat-db${NC}"
+./debug.sh: echo -e "${BLUE}Testing port connectivity:${NC}"
+./debug.sh: echo "Chat backend (port 88):"
+./debug.sh: kubectl exec websocket-debug -- sh -c "nc -zv chat-backend 88" || echo -e "${YELLOW}Port 88 not accessible${NC}"
+./debug.sh: echo "Chat frontend (port 90):"
+./debug.sh: kubectl exec websocket-debug -- sh -c "nc -zv chat-frontend 90" || echo -e "${YELLOW}Port 90 not accessible${NC}"
+./debug.sh: echo -e "${BLUE}Checking backend logs:${NC}"
+./debug.sh: BACKEND_POD=$(kubectl get pods -l app=chat-backend -o jsonpath="{.items[0].metadata.name}")
+./debug.sh: if [ -n "$BACKEND_POD" ]; then
+./debug.sh:   kubectl logs $BACKEND_POD | tail -n 50
+./debug.sh: else
+./debug.sh:   echo -e "${RED}No backend pod found${NC}"
+./debug.sh: echo -e "${BLUE}Checking frontend logs:${NC}"
+./debug.sh: FRONTEND_POD=$(kubectl get pods -l app=chat-frontend -o jsonpath="{.items[0].metadata.name}")
+./debug.sh: if [ -n "$FRONTEND_POD" ]; then
+./debug.sh:   kubectl logs $FRONTEND_POD | tail -n 50
+./debug.sh: else
+./debug.sh:   echo -e "${RED}No frontend pod found${NC}"
+./debug.sh: echo -e "${GREEN}Debug complete. To clean up the debug pod, run:${NC}"
+./debug.sh: echo "kubectl delete pod websocket-debug"
+./ai-app-deployment.yaml: apiVersion: apps/v1
+./ai-app-deployment.yaml: kind: Deployment
+./ai-app-deployment.yaml: metadata:
+./ai-app-deployment.yaml:   name: ai-app
+./ai-app-deployment.yaml:   labels:
+./ai-app-deployment.yaml:     app: ai-app
+./ai-app-deployment.yaml:     tier: frontend
+./ai-app-deployment.yaml: spec:
+./ai-app-deployment.yaml:   replicas: 1
+./ai-app-deployment.yaml:   selector:
+./ai-app-deployment.yaml:     matchLabels:
+./ai-app-deployment.yaml:       app: ai-app
+./ai-app-deployment.yaml:       tier: frontend
+./ai-app-deployment.yaml:   template:
+./ai-app-deployment.yaml:     metadata:
+./ai-app-deployment.yaml:       labels:
+./ai-app-deployment.yaml:         app: ai-app
+./ai-app-deployment.yaml:         tier: frontend
+./ai-app-deployment.yaml:     spec:
+./ai-app-deployment.yaml:       containers:
+./ai-app-deployment.yaml:       - name: ai-app
+./ai-app-deployment.yaml:         image: localhost:5000/ai-app:latest
+./ai-app-deployment.yaml:         resources:
+./ai-app-deployment.yaml:           limits:
+./ai-app-deployment.yaml:             memory: "256Mi"
+./ai-app-deployment.yaml:             cpu: "200m"
+./ai-app-deployment.yaml:           requests:
+./ai-app-deployment.yaml:             memory: "128Mi"
+./ai-app-deployment.yaml:             cpu: "100m"
+./ai-app-deployment.yaml:         ports:
+./ai-app-deployment.yaml:         - containerPort: 100
+./ai-app-deployment.yaml:           name: http
+./ai-app-deployment.yaml:         env:
+./ai-app-deployment.yaml:         - name: AZURE_STORAGE_CONNECTION_STRING
+./ai-app-deployment.yaml:           valueFrom:
+./ai-app-deployment.yaml:             secretKeyRef:
+./ai-app-deployment.yaml:               name: azure-secret
+./ai-app-deployment.yaml:               key: AZURE_STORAGE_CONNECTION_STRING
+./ai-app-deployment.yaml:         - name: AZURE_SQL_CONNECTION_STRING
+./ai-app-deployment.yaml:           valueFrom:
+./ai-app-deployment.yaml:             secretKeyRef:
+./ai-app-deployment.yaml:               name: azure-secret
+./ai-app-deployment.yaml:               key: AZURE_SQL_CONNECTION_STRING
+./ai-app-deployment.yaml:         - name: AZURE_ENTITY_EXTRACTION_KEY
+./ai-app-deployment.yaml:           valueFrom:
+./ai-app-deployment.yaml:             secretKeyRef:
+./ai-app-deployment.yaml:               name: azure-secret
+./ai-app-deployment.yaml:               key: AZURE_ENTITY_EXTRACTION_KEY
+./ai-app-deployment.yaml:         - name: AZURE_ENTITY_EXTRACTION_ENDPOINT
+./ai-app-deployment.yaml:           valueFrom:
+./ai-app-deployment.yaml:             secretKeyRef:
+./ai-app-deployment.yaml:               name: azure-secret
+./ai-app-deployment.yaml:               key: AZURE_ENTITY_EXTRACTION_ENDPOINT
+./cms-deployment.yaml: apiVersion: apps/v1
+./cms-deployment.yaml: kind: Deployment
+./cms-deployment.yaml: metadata:
+./cms-deployment.yaml:   name: cms-deployment
+./cms-deployment.yaml: spec:
+./cms-deployment.yaml:   replicas: 4
+./cms-deployment.yaml:   selector:
+./cms-deployment.yaml:     matchLabels:
+./cms-deployment.yaml:       app: cms
+./cms-deployment.yaml:   template:
+./cms-deployment.yaml:     metadata:
+./cms-deployment.yaml:       labels:
+./cms-deployment.yaml:         app: cms
+./cms-deployment.yaml:     spec:
+./cms-deployment.yaml:       containers:
+./cms-deployment.yaml:       - name: cms
+./cms-deployment.yaml:         image: localhost:5000/vvveb-cms:latest
+./cms-deployment.yaml:         resources:
+./cms-deployment.yaml:           limits:
+./cms-deployment.yaml:             memory: "256Mi"
+./cms-deployment.yaml:             cpu: "200m"
+./cms-deployment.yaml:           requests:
+./cms-deployment.yaml:             memory: "128Mi"
+./cms-deployment.yaml:             cpu: "100m"
+./cms-deployment.yaml:         ports:
+./cms-deployment.yaml:         - containerPort: 80
+./cms-deployment.yaml:         env:
+./cms-deployment.yaml:         - name: DB_HOST
+./cms-deployment.yaml:           value: "cms-db-service"
+./cms-deployment.yaml:         - name: DB_DATABASE
+./cms-deployment.yaml:           value: "vvveb"
+./cms-deployment.yaml:         - name: DB_USER
+./cms-deployment.yaml:           value: "vvveb"
+./cms-deployment.yaml:         - name: DB_PASSWORD
+./cms-deployment.yaml:           value: "vvveb"
+./cms-deployment.yaml:         - name: DB_ENGINE
+./cms-deployment.yaml:           value: "mysqli"
+./cms-deployment.yaml:         volumeMounts:
+./cms-deployment.yaml:         - mountPath: "/var/www/html"
+./cms-deployment.yaml:           name: cms-storage
+./cms-deployment.yaml:       volumes:
+./cms-deployment.yaml:       - name: cms-storage
+./cms-deployment.yaml:         persistentVolumeClaim:
+./cms-deployment.yaml:           claimName: cms-pvc
+./cms-db-pvc.yaml: apiVersion: v1
+./cms-db-pvc.yaml: kind: PersistentVolumeClaim
+./cms-db-pvc.yaml: metadata:
+./cms-db-pvc.yaml:   name: cms-db-pvc
+./cms-db-pvc.yaml: spec:
+./cms-db-pvc.yaml:   accessModes:
+./cms-db-pvc.yaml:     - ReadWriteOnce
+./cms-db-pvc.yaml:   resources:
+./cms-db-pvc.yaml:     requests:
+./cms-db-pvc.yaml:       storage: 1Gi
+./cms-db-pvc.yaml:   storageClassName: ""
+./all.sh: #!/bin/bash
+./all.sh: set -e
+./all.sh: GREEN='\033[0;32m'
+./all.sh: BLUE='\033[0;34m'
+./all.sh: RED='\033[0;31m'
+./all.sh: NC='\033[0m' # No Color
+./all.sh: echo -e "${BLUE}========== Kubernetes Deployment Script (MicroK8s - Fresh Start) ==========${NC}"
+./all.sh: # Check if MicroK8s is installed and running
+./all.sh: echo -e "${BLUE}Checking MicroK8s status...${NC}"
+./all.sh: if ! command -v microk8s &> /dev/null; then
+./all.sh:   echo -e "${RED}MicroK8s not found. Please install MicroK8s first.${NC}"
+./all.sh:   exit 1
+./all.sh: # Stop and reset MicroK8s to ensure a clean slate
+./all.sh: echo -e "${BLUE}Resetting MicroK8s cluster...${NC}"
+./all.sh: microk8s stop || true
+./all.sh: microk8s reset --force || true
+./all.sh: microk8s start
+./all.sh: microk8s status --wait-ready || {
+./all.sh:   echo -e "${RED}Failed to start MicroK8s. Please check the installation.${NC}"
+./all.sh:   exit 1
+./all.sh: echo -e "${GREEN}MicroK8s cluster reset and started successfully.${NC}"
+./all.sh: # Set alias for kubectl to use MicroK8s' kubectl
+./all.sh: alias kubectl='microk8s kubectl'
+./all.sh: # Clean up local Docker registry
+./all.sh: echo -e "${BLUE}Cleaning up local Docker registry...${NC}"
+./all.sh: if [ "$(docker ps -q -f name=registry)" ]; then
+./all.sh:   echo "Registry container exists, stopping and removing..."
+./all.sh:   docker stop registry
+./all.sh:   docker rm registry
+./all.sh: if [ "$(docker ps -a -q -f name=registry)" ]; then
+./all.sh:   echo "Removing stopped registry container..."
+./all.sh:   docker rm registry
+./all.sh: docker run -d --restart=always --name registry -p 5000:5000 registry:2
+./all.sh: echo -e "${GREEN}Local registry started at localhost:5000${NC}"
+./all.sh: # Configure MicroK8s to use the local registry
+./all.sh: echo -e "${BLUE}Configuring MicroK8s to use local registry...${NC}"
+./all.sh: sudo mkdir -p /var/snap/microk8s/current/args
+./all.sh: cat <<EOF | sudo tee /var/snap/microk8s/current/args/containerd-template.toml
+./all.sh: [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
+./all.sh:   endpoint = ["http://localhost:5000"]
+./all.sh: # Restart MicroK8s to apply the registry configuration
+./all.sh: sudo snap restart microk8s
+./all.sh: microk8s status --wait-ready
+./all.sh: echo -e "${GREEN}MicroK8s configured to use local registry.${NC}"
+./all.sh: # Disable and re-enable MicroK8s Ingress addon for a fresh start
+./all.sh: echo -e "${BLUE}Resetting NGINX Ingress Controller...${NC}"
+./all.sh: microk8s disable ingress || true
+./all.sh: microk8s enable ingress
+./all.sh: echo -e "${GREEN}Ingress controller reset and enabled. Waiting for it to be ready...${NC}"
+./all.sh: # Wait for Ingress controller to be ready
+./all.sh: echo -e "${BLUE}Waiting for Ingress controller to be ready...${NC}"
+./all.sh: kubectl wait --namespace ingress-nginx \
+./all.sh:   --for=condition=ready pod \
+./all.sh:   --selector=app.kubernetes.io/component=controller \
+./all.sh:   --timeout=90s || echo -e "${RED}Timeout waiting for Ingress controller. Continuing anyway...${NC}"
+./all.sh: # Build and push Docker images
+./all.sh: echo -e "${BLUE}Building and pushing Docker images...${NC}"
+./all.sh: bash image_push.sh
+./all.sh: sleep 1
+./all.sh: echo -e "${BLUE}All images built and pushed successfully.${NC}"
+./all.sh: echo -e "${GREEN}Ingress manifest created.${NC}"
+./all.sh: # Wait before applying manifests to ensure cluster stability
+./all.sh: echo -e "${BLUE}Waiting 30 seconds before applying Kubernetes manifests...${NC}"
+./all.sh: sleep 30
+./all.sh: # Apply Kubernetes manifests
+./all.sh: echo -e "${BLUE}Applying Kubernetes manifests...${NC}"
+./all.sh: kubectl apply -f ingress.yaml
+./all.sh: cd chat
+./all.sh: kubectl apply -f chat-db-secret.yaml
+./all.sh: kubectl apply -f chat-db-pvc.yaml
+./all.sh: kubectl apply -f chat-db-deployment.yaml
+./all.sh: kubectl apply -f chat-db-service.yaml
+./all.sh: kubectl apply -f chat-backend-deployment.yaml
+./all.sh: kubectl apply -f chat-backend-service.yaml
+./all.sh: kubectl apply -f chat-frontend-deployment.yaml
+./all.sh: kubectl apply -f chat-frontend-service.yaml
+./all.sh: cd ..
+./all.sh: echo -e "${GREEN}All manifests applied successfully.${NC}"
+./all.sh: # Wait for all deployments to be ready
+./all.sh: echo -e "${BLUE}Waiting for all deployments to be ready...${NC}"
+./all.sh: kubectl get deployments -o name | xargs -I{} kubectl rollout status {}
+./all.sh: echo -e "${GREEN}====================${NC}"
+./all.sh: echo -e "${GREEN}Deployment complete!${NC}"
+./all.sh: echo -e "${GREEN}====================${NC}"
+./all.sh: echo -e "${GREEN}You can now access:${NC}"
+./all.sh: echo -e "${GREEN}CMS: http://localhost/${NC}"
+./all.sh: echo -e "${GREEN}Chat: http://localhost/chat${NC}"
+./all.sh: echo -e "${GREEN}====================${NC}"
+./all.sh: echo -e "${BLUE}Currently running pods:${NC}"
+./all.sh: kubectl get pods
+./all.sh: echo -e "${BLUE}Ingress status:${NC}"
+./all.sh: kubectl get ingress
+./cms-pvc.yaml: apiVersion: v1
+./cms-pvc.yaml: kind: PersistentVolumeClaim
+./cms-pvc.yaml: metadata:
+./cms-pvc.yaml:   name: cms-pvc
+./cms-pvc.yaml: spec:
+./cms-pvc.yaml:   accessModes:
+./cms-pvc.yaml:     - ReadWriteOnce
+./cms-pvc.yaml:   resources:
+./cms-pvc.yaml:     requests:
+./cms-pvc.yaml:       storage: 1Gi
+./cms-pvc.yaml:   storageClassName: ""
+./ingress.yaml: apiVersion: networking.k8s.io/v1
+./ingress.yaml: kind: Ingress
+./ingress.yaml: metadata:
+./ingress.yaml:   name: app-ingress
+./ingress.yaml:   namespace: default
+./ingress.yaml:   annotations:
+./ingress.yaml:     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+./ingress.yaml:     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+./ingress.yaml:     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+./ingress.yaml:     nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+./ingress.yaml:     nginx.ingress.kubernetes.io/proxy-buffering: "off"
+./ingress.yaml:     nginx.ingress.kubernetes.io/configuration-snippet: |
+./ingress.yaml:       proxy_set_header Upgrade $http_upgrade;
+./ingress.yaml:       proxy_set_header Connection "upgrade";
+./ingress.yaml:     nginx.ingress.kubernetes.io/server-snippet: |
+./ingress.yaml:       access_log /var/log/nginx/access.log;
+./ingress.yaml:       error_log /var/log/nginx/error.log debug;
+./ingress.yaml: spec:
+./ingress.yaml:   ingressClassName: nginx
+./ingress.yaml:   rules:
+./ingress.yaml:   - host: localhost
+./ingress.yaml:     http:
+./ingress.yaml:       paths:
+./ingress.yaml:       - path: /ws/chat
+./ingress.yaml:         pathType: Exact
+./ingress.yaml:         backend:
+./ingress.yaml:           service:
+./ingress.yaml:             name: chat-backend
+./ingress.yaml:             port:
+./ingress.yaml:               number: 88
+./ingress.yaml:       - path: /api
+./ingress.yaml:         pathType: Prefix
+./ingress.yaml:         backend:
+./ingress.yaml:           service:
+./ingress.yaml:             name: chat-backend
+./ingress.yaml:             port:
+./ingress.yaml:               number: 88
+./ingress.yaml:       - path: /
+./ingress.yaml:         pathType: Prefix
+./ingress.yaml:         backend:
+./ingress.yaml:           service:
+./ingress.yaml:             name: chat-frontend
+./ingress.yaml:             port:
+./ingress.yaml:               number: 90
+./image_push.sh: #!/bin/bash
+./image_push.sh: # push-images.sh - Build, tag and push all images to the local registry
+./image_push.sh: # Place this script in the kubernetes folder
+./image_push.sh: set -e
+./image_push.sh: # Registry URL
+./image_push.sh: REGISTRY="localhost:5000"
+./image_push.sh: # Get the absolute path to the repo root directory (parent of kubernetes folder)
+./image_push.sh: REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+./image_push.sh: echo "=== Building and pushing images to $REGISTRY ==="
+./image_push.sh: echo "Repository root: $REPO_ROOT"
+./image_push.sh: # Function to build and push an image
+./image_push.sh: build_and_push() {
+./image_push.sh:     local app_name=$1
+./image_push.sh:     local app_dir=$2
+./image_push.sh:     local dockerfile=$3
+./image_push.sh:     echo ""
+./image_push.sh:     echo "
+./image_push.sh:  Building $app_name..."
+./image_push.sh:     echo "Directory: $app_dir"
+./image_push.sh:     echo "Dockerfile: $dockerfile"
+./image_push.sh:     # Build the image
+./image_push.sh:     docker build -t "$REGISTRY/$app_name:latest" -f "$dockerfile" "$app_dir"
+./image_push.sh:     
+./image_push.sh:     # Push the image
+./image_push.sh:     echo "
+./image_push.sh:  Pushing $REGISTRY/$app_name:latest..."
+./image_push.sh:     docker push "$REGISTRY/$app_name:latest"
+./image_push.sh:     
+./image_push.sh:     echo "
+./image_push.sh:  $app_name image built and pushed successfully"
+./image_push.sh: # Build and push all application images
+./image_push.sh: build_and_push "ai-app" "$REPO_ROOT/ai-app" "$REPO_ROOT/ai-app/Dockerfile"
+./image_push.sh: build_and_push "chat-frontend" "$REPO_ROOT/chat/frontend" "$REPO_ROOT/chat/frontend/Dockerfile"
+./image_push.sh: build_and_push "chat-backend" "$REPO_ROOT/chat/backend" "$REPO_ROOT/chat/backend/Dockerfile"
+./image_push.sh: build_and_push "chat-db" "$REPO_ROOT/chat/db" "$REPO_ROOT/chat/db/Dockerfile"
+./image_push.sh: # For CMS, we're using an existing image from the registry
+./image_push.sh: echo ""
+./image_push.sh: echo "
+./image_push.sh:  Using existing image for CMS (localhost:5000/vvveb-cms:latest)"
+./image_push.sh: echo "   If this image doesn't exist yet, you need to pull and push it separately."
+./image_push.sh: echo ""
+./image_push.sh: echo "=== All images have been built and pushed to $REGISTRY ==="
+./image_push.sh: echo ""
+./image_push.sh: echo "To use these images in your Kind cluster, update your deployment files to use:"
+./image_push.sh: echo "  - $REGISTRY/ai-app:latest"
+./image_push.sh: echo "  - $REGISTRY/chat-frontend:latest"
+./image_push.sh: echo "  - $REGISTRY/chat-backend:latest"
+./image_push.sh: echo "  - $REGISTRY/chat-db:latest"
+./image_push.sh: echo ""
+./image_push.sh: echo "When using Kind, you may need to use the registry's IP address instead of localhost:"
+./image_push.sh: REGISTRY_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry)
+./image_push.sh: echo "Registry IP for use in Kind: $REGISTRY_IP:5000"
+./cms-service.yaml: apiVersion: v1
+./cms-service.yaml: kind: Service
+./cms-service.yaml: metadata:
+./cms-service.yaml:   name: cms-service
+./cms-service.yaml: spec:
+./cms-service.yaml:   selector:
+./cms-service.yaml:     app: cms
+./cms-service.yaml:   ports:
+./cms-service.yaml:   - protocol: TCP
+./cms-service.yaml:     port: 80
+./cms-service.yaml:     targetPort: 80
+./cms-service.yaml:   type: ClusterIP
+./cms-db-service.yaml: apiVersion: v1
+./cms-db-service.yaml: kind: Service
+./cms-db-service.yaml: metadata:
+./cms-db-service.yaml:   name: cms-db-service
+./cms-db-service.yaml: spec:
+./cms-db-service.yaml:   selector:
+./cms-db-service.yaml:     app: cms-db
+./cms-db-service.yaml:   ports:
+./cms-db-service.yaml:   - protocol: TCP
+./cms-db-service.yaml:     port: 3306
+./cms-db-service.yaml:     targetPort: 3306
+./cms-db-service.yaml:   type: ClusterIP
