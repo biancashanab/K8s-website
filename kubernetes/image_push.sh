@@ -39,6 +39,9 @@ build_and_push "ai-app" "$REPO_ROOT/ai-app" "$REPO_ROOT/ai-app/Dockerfile"
 build_and_push "chat-frontend" "$REPO_ROOT/chat/frontend" "$REPO_ROOT/chat/frontend/Dockerfile"
 build_and_push "chat-backend" "$REPO_ROOT/chat/backend" "$REPO_ROOT/chat/backend/Dockerfile"
 build_and_push "chat-db" "$REPO_ROOT/chat/db" "$REPO_ROOT/chat/db/Dockerfile"
+build_and_push "vvveb-cms" "$REPO_ROOT/cms" "$REPO_ROOT/cms/Dockerfile"
+
+docker push localhost:5000/mysql:latest
 
 # For CMS, we're using an existing image from the registry
 echo ""

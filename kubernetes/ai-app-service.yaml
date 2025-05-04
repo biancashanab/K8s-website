@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-app
+  labels:
+    app: ai-app
+    tier: frontend
+spec:
+  selector:
+    app: ai-app
+    tier: frontend
+  ports:
+  - port: 90
+    targetPort: 90
+  type: ClusterIP

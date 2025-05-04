@@ -35,10 +35,9 @@ spec:
           value: "vvveb"
         - name: DB_ENGINE
           value: "mysqli"
-        volumeMounts:
-        - mountPath: "/var/www/html"
-          name: cms-storage
-      volumes:
-      - name: cms-storage
-        persistentVolumeClaim:
-          claimName: cms-pvc
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10

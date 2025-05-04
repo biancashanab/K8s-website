@@ -28,7 +28,7 @@ spec:
             memory: "128Mi"
             cpu: "100m"
         ports:
-        - containerPort: 100
+        - containerPort: 90
           name: http
         env:
         - name: AZURE_STORAGE_CONNECTION_STRING
