@@ -1,0 +1,150 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cms-db-pvc
+  namespace: default
+spec:
+  storageClassName: microk8s-hostpath
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cms-deployment
+  namespace: default
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: cms
+  template:
+    metadata:
+      labels:
+        app: cms
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - cms
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: cms
+        image: localhost:32000/vvveb-cms:latest
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_HOST
+          value: "cms-db-service"
+        - name: DB_DATABASE
+          value: "vvveb"
+        - name: DB_USER
+          value: "vvveb"
+        - name: DB_PASSWORD
+          value: "vvveb"
+        - name: DB_ENGINE
+          value: "mysqli"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cms-service
+  namespace: default
+spec:
+  selector:
+    app: cms
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cms-db-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cms-db
+  template:
+    metadata:
+      labels:
+        app: cms-db
+    spec:
+      containers:
+      - name: mysql
+        image: localhost:32000/mysql:latest
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "vvveb"
+        - name: MYSQL_DATABASE
+          value: "vvveb"
+        - name: MYSQL_USER
+          value: "vvveb"
+        - name: MYSQL_PASSWORD
+          value: "vvveb"
+        volumeMounts:
+        - mountPath: "/var/lib/mysql"
+          name: cms-db-storage
+      volumes:
+      - name: cms-db-storage
+        persistentVolumeClaim:
+          claimName: cms-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cms-db-service
+  namespace: default
+spec:
+  selector:
+    app: cms-db
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cms-lb
+  namespace: default
+spec:
+  type: LoadBalancer
+  selector:
+    app: cms
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 80
