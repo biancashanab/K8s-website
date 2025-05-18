@@ -1,2 +1,3 @@
 .gitignore
+ai/backend/.env
 cms/cms-db-data
