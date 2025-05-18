@@ -1,3 +1,4 @@
-.gitignore
+**/.gitignore
+azure/secrets/
 ai/backend/.env
 cms/cms-db-data
