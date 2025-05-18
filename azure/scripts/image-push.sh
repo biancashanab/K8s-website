@@ -15,7 +15,7 @@ IMAGES=(
   "chat-backend"
   "chat-frontend"
   "ai-backend"
-  "ai-app"
+  "ai-frontend"
 )
 
 # Function to build and push
@@ -37,7 +37,8 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 build_and_push "vvveb-cms" "$REPO_ROOT/cms" "$REPO_ROOT/cms/Dockerfile"
 build_and_push "chat-backend" "$REPO_ROOT/chat/backend" "$REPO_ROOT/chat/backend/Dockerfile"
 build_and_push "chat-frontend" "$REPO_ROOT/chat/frontend" "$REPO_ROOT/chat/frontend/Dockerfile"
-build_and_push "ai-app" "$REPO_ROOT/ai-app" "$REPO_ROOT/ai-app/Dockerfile"
+build_and_push "ai-frontend" "$REPO_ROOT/ai/frontend" "$REPO_ROOT/ai/frontend/Dockerfile"
+build_and_push "ai-backend" "$REPO_ROOT/ai/backend" "$REPO_ROOT/ai/backend/Dockerfile"
 
 # Push standard images
 STANDARD_IMAGES=(

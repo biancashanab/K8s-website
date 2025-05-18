@@ -47,7 +47,7 @@ echo -e "${GREEN}Chat deployment applied successfully${NC}"
 
 # 5. Apply AI deployment
 echo -e "${BLUE}5. Applying AI deployment...${NC}"
-$KUBECTL apply -f $K8S_DIR/ai/ai-app-deployment.yaml
+$KUBECTL apply -f $K8S_DIR/ai/
 echo -e "${GREEN}AI deployment applied successfully${NC}"
 
 # Wait for deployments to be ready

@@ -72,7 +72,7 @@ spec:
   rules:
   - http:
       paths:
-      - path: /ai-service/api(/|$)(.*)
+      - path: /api(/|$)(.*)
         pathType: Prefix
         backend:
           service:
