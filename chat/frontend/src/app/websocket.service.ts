@@ -14,7 +14,7 @@ export class WebSocketService {
   private reconnectInterval = 3000; // 3 seconds
   
   // Use dynamic WebSocket URL
-  private wsUrl = environment.wsUrl;
+  private wsUrl = "http://localhost:88/chat";
   
   constructor() {
     console.log('WebSocket Service initialized with URL:', this.wsUrl);

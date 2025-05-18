@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import java.sql.Timestamp;
 import org.json.JSONObject;
 
 public class DBManager {
@@ -57,20 +57,21 @@ public class DBManager {
         return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
     }
 
-    public void saveMessage(String username, String message, long timestamp) {
-        String sql = "INSERT INTO messages (username, message, timestamp) VALUES (?, ?, ?)";
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            LOGGER.log(Level.INFO, "Database connection established: " + conn.getMetaData().getURL());
-            stmt.setString(1, username);
-            stmt.setString(2, message);
-            stmt.setLong(3, timestamp);
-            int rowsAffected = stmt.executeUpdate();
-            LOGGER.log(Level.INFO, "Message saved to database. Rows affected: " + rowsAffected);
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error saving message to database: " + e.getMessage(), e);
-        }
+	public void saveMessage(String username, String message, long timestamp) {
+    String sql = "INSERT INTO messages (username, message, timestamp) VALUES (?, ?, ?)";
+    try (Connection conn = getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        LOGGER.log(Level.INFO, "Database connection established: " + conn.getMetaData().getURL());
+        stmt.setString(1, username);
+        stmt.setString(2, message);
+        stmt.setTimestamp(3, new Timestamp(timestamp)); // ✅ CONVERSION HERE
+        int rowsAffected = stmt.executeUpdate();
+        LOGGER.log(Level.INFO, "Message saved to database. Rows affected: " + rowsAffected);
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error saving message to database: " + e.getMessage(), e);
     }
+	}
+
 
     public List<String> getHistory() {
         return getHistory(150);
@@ -89,7 +90,7 @@ public class DBManager {
                 JSONObject message = new JSONObject();
                 message.put("username", rs.getString("username"));
                 message.put("message", rs.getString("message"));
-                message.put("timestamp", rs.getLong("timestamp"));
+                message.put("timestamp", rs.getTimestamp("timestamp"));
                 messages.add(message.toString());
                 messageCount++;
             }

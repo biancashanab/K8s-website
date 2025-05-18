@@ -1,5 +1,5 @@
 export const environment = {
-  production: false,
+  production: false, // or false for environment.ts
   apiUrl: '/api',
-  wsUrl: window.location.protocol === 'https:' ? 'wss://' : 'ws://' + window.location.host + '/ws'
+  wsUrl: 'ws://localhost/chat'
 };

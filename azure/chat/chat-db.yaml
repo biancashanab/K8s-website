@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: chat-db-secret
+  namespace: default
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: Y2hhdHBhc3N3b3Jk
+  MYSQL_USER: Y2hhdHVzZXI=
+  MYSQL_PASSWORD: Y2hhdHBhc3N3b3Jk
+  MYSQL_DATABASE: Y2hhdA==
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-db
+  namespace: default
+  labels:
+    app: chat
+    tier: db
+spec:
+  selector:
+    matchLabels:
+      app: chat
+      tier: db
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: chat
+        tier: db
+    spec:
+      containers:
+      - image: mysql:8.0
+        name: chat-db
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        env:
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: MYSQL_PASSWORD
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: MYSQL_ROOT_PASSWORD
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: chat-db-persistent-storage
+          mountPath: /var/lib/mysql
+        - name: init-db
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: chat-db-persistent-storage
+        persistentVolumeClaim:
+          claimName: chat-db-pvc
+      - name: init-db
+        configMap:
+          name: chat-db-init
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chat-db-pvc
+  namespace: default
+spec:
+  storageClassName: microk8s-hostpath  
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-db
+  namespace: default
+  labels:
+    app: chat
+    tier: db
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    app: chat
+    tier: db

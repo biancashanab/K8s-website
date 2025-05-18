@@ -1,0 +1,205 @@
+chat/chat-db-secret.yaml: apiVersion: v1
+chat/chat-db-secret.yaml: kind: Secret
+chat/chat-db-secret.yaml: metadata:
+chat/chat-db-secret.yaml:   name: chat-db-secret
+chat/chat-db-secret.yaml:   namespace: default
+chat/chat-db-secret.yaml: type: Opaque
+chat/chat-db-secret.yaml: data:
+chat/chat-db-secret.yaml:   MYSQL_ROOT_PASSWORD: Y2hhdHBhc3N3b3Jk
+chat/chat-db-secret.yaml:   MYSQL_USER: Y2hhdHVzZXIK
+chat/chat-db-secret.yaml:   MYSQL_PASSWORD: Y2hhdHBhc3N3b3JkCg==
+chat/chat-db-secret.yaml:   MYSQL_DATABASE: Y2hhdAo=
+chat/chat-db-pvc.yaml: apiVersion: v1
+chat/chat-db-pvc.yaml: kind: PersistentVolume
+chat/chat-db-pvc.yaml: metadata:
+chat/chat-db-pvc.yaml:   name: chat-db-pv
+chat/chat-db-pvc.yaml:   labels:
+chat/chat-db-pvc.yaml:     type: local
+chat/chat-db-pvc.yaml: spec:
+chat/chat-db-pvc.yaml:   storageClassName: manual
+chat/chat-db-pvc.yaml:   capacity:
+chat/chat-db-pvc.yaml:     storage: 1Gi
+chat/chat-db-pvc.yaml:   accessModes:
+chat/chat-db-pvc.yaml:     - ReadWriteOnce
+chat/chat-db-pvc.yaml:   hostPath:
+chat/chat-db-pvc.yaml:     path: "/var/lib/docker/volumes/chat-db-data/_data"  # Path to Docker volume
+chat/chat-db-pvc.yaml: apiVersion: v1
+chat/chat-db-pvc.yaml: kind: PersistentVolumeClaim
+chat/chat-db-pvc.yaml: metadata:
+chat/chat-db-pvc.yaml:   name: chat-db-pvc
+chat/chat-db-pvc.yaml: spec:
+chat/chat-db-pvc.yaml:   storageClassName: manual
+chat/chat-db-pvc.yaml:   accessModes:
+chat/chat-db-pvc.yaml:     - ReadWriteOnce
+chat/chat-db-pvc.yaml:   resources:
+chat/chat-db-pvc.yaml:     requests:
+chat/chat-db-pvc.yaml:       storage: 1Gi
+chat/chat-backend-service.yaml: apiVersion: v1
+chat/chat-backend-service.yaml: kind: Service
+chat/chat-backend-service.yaml: metadata:
+chat/chat-backend-service.yaml:   name: chat-backend
+chat/chat-backend-service.yaml:   namespace: default
+chat/chat-backend-service.yaml: spec:
+chat/chat-backend-service.yaml:   selector:
+chat/chat-backend-service.yaml:     app: chat-backend
+chat/chat-backend-service.yaml:   ports:
+chat/chat-backend-service.yaml:   - port: 88
+chat/chat-backend-service.yaml:     targetPort: 88
+chat/chat-backend-service.yaml:   type: ClusterIP
+chat/chat-db-deployment.yaml: apiVersion: apps/v1
+chat/chat-db-deployment.yaml: kind: Deployment
+chat/chat-db-deployment.yaml: metadata:
+chat/chat-db-deployment.yaml:   name: chat-db
+chat/chat-db-deployment.yaml:   labels:
+chat/chat-db-deployment.yaml:     app: chat
+chat/chat-db-deployment.yaml:     tier: db
+chat/chat-db-deployment.yaml: spec:
+chat/chat-db-deployment.yaml:   selector:
+chat/chat-db-deployment.yaml:     matchLabels:
+chat/chat-db-deployment.yaml:       app: chat
+chat/chat-db-deployment.yaml:       tier: db
+chat/chat-db-deployment.yaml:   strategy:
+chat/chat-db-deployment.yaml:     type: Recreate
+chat/chat-db-deployment.yaml:   template:
+chat/chat-db-deployment.yaml:     metadata:
+chat/chat-db-deployment.yaml:       labels:
+chat/chat-db-deployment.yaml:         app: chat
+chat/chat-db-deployment.yaml:         tier: db
+chat/chat-db-deployment.yaml:     spec:
+chat/chat-db-deployment.yaml:       containers:
+chat/chat-db-deployment.yaml:       - image: localhost:5000/chat-db:latest
+chat/chat-db-deployment.yaml:         name: chat-db
+chat/chat-db-deployment.yaml:         resources:
+chat/chat-db-deployment.yaml:           limits:
+chat/chat-db-deployment.yaml:             memory: "512Mi"
+chat/chat-db-deployment.yaml:             cpu: "500m"
+chat/chat-db-deployment.yaml:           requests:
+chat/chat-db-deployment.yaml:             memory: "256Mi"
+chat/chat-db-deployment.yaml:             cpu: "250m"
+chat/chat-db-deployment.yaml:         env:
+chat/chat-db-deployment.yaml:         - name: MYSQL_DATABASE
+chat/chat-db-deployment.yaml:           valueFrom:
+chat/chat-db-deployment.yaml:             secretKeyRef:
+chat/chat-db-deployment.yaml:               name: chat-db-secret
+chat/chat-db-deployment.yaml:               key: MYSQL_DATABASE
+chat/chat-db-deployment.yaml:         - name: MYSQL_USER
+chat/chat-db-deployment.yaml:           valueFrom:
+chat/chat-db-deployment.yaml:             secretKeyRef:
+chat/chat-db-deployment.yaml:               name: chat-db-secret
+chat/chat-db-deployment.yaml:               key: MYSQL_USER
+chat/chat-db-deployment.yaml:         - name: MYSQL_PASSWORD
+chat/chat-db-deployment.yaml:           valueFrom:
+chat/chat-db-deployment.yaml:             secretKeyRef:
+chat/chat-db-deployment.yaml:               name: chat-db-secret
+chat/chat-db-deployment.yaml:               key: MYSQL_PASSWORD
+chat/chat-db-deployment.yaml:         - name: MYSQL_ROOT_PASSWORD
+chat/chat-db-deployment.yaml:           valueFrom:
+chat/chat-db-deployment.yaml:             secretKeyRef:
+chat/chat-db-deployment.yaml:               name: chat-db-secret
+chat/chat-db-deployment.yaml:               key: MYSQL_ROOT_PASSWORD
+chat/chat-db-deployment.yaml:         ports:
+chat/chat-db-deployment.yaml:         - containerPort: 3306
+chat/chat-db-deployment.yaml:           name: mysql
+chat/chat-db-deployment.yaml:         volumeMounts:
+chat/chat-db-deployment.yaml:         - name: chat-db-persistent-storage
+chat/chat-db-deployment.yaml:           mountPath: /var/lib/mysql
+chat/chat-db-deployment.yaml:       volumes:
+chat/chat-db-deployment.yaml:       - name: chat-db-persistent-storage
+chat/chat-db-deployment.yaml:         persistentVolumeClaim:
+chat/chat-db-deployment.yaml:           claimName: chat-db-pvc
+chat/chat-backend-deployment.yaml: apiVersion: apps/v1
+chat/chat-backend-deployment.yaml: kind: Deployment
+chat/chat-backend-deployment.yaml: metadata:
+chat/chat-backend-deployment.yaml:   name: chat-backend
+chat/chat-backend-deployment.yaml:   namespace: default
+chat/chat-backend-deployment.yaml: spec:
+chat/chat-backend-deployment.yaml:   replicas: 3
+chat/chat-backend-deployment.yaml:   selector:
+chat/chat-backend-deployment.yaml:     matchLabels:
+chat/chat-backend-deployment.yaml:       app: chat-backend
+chat/chat-backend-deployment.yaml:   template:
+chat/chat-backend-deployment.yaml:     metadata:
+chat/chat-backend-deployment.yaml:       labels:
+chat/chat-backend-deployment.yaml:         app: chat-backend
+chat/chat-backend-deployment.yaml:     spec:
+chat/chat-backend-deployment.yaml:       containers:
+chat/chat-backend-deployment.yaml:       - name: tomcat
+chat/chat-backend-deployment.yaml:         image: localhost:5000/chat-backend:latest
+chat/chat-backend-deployment.yaml:         env:
+chat/chat-backend-deployment.yaml:         - name: DB_HOST
+chat/chat-backend-deployment.yaml:           value: chat-db
+chat/chat-backend-deployment.yaml:         - name: DB_NAME
+chat/chat-backend-deployment.yaml:           valueFrom:
+chat/chat-backend-deployment.yaml:             secretKeyRef:
+chat/chat-backend-deployment.yaml:               name: chat-db-secret
+chat/chat-backend-deployment.yaml:               key: MYSQL_DATABASE
+chat/chat-backend-deployment.yaml:         - name: DB_USER
+chat/chat-backend-deployment.yaml:           valueFrom:
+chat/chat-backend-deployment.yaml:             secretKeyRef:
+chat/chat-backend-deployment.yaml:               name: chat-db-secret
+chat/chat-backend-deployment.yaml:               key: MYSQL_USER
+chat/chat-backend-deployment.yaml:         - name: DB_PASSWORD
+chat/chat-backend-deployment.yaml:           valueFrom:
+chat/chat-backend-deployment.yaml:             secretKeyRef:
+chat/chat-backend-deployment.yaml:               name: chat-db-secret
+chat/chat-backend-deployment.yaml:               key: MYSQL_PASSWORD
+chat/chat-backend-deployment.yaml:         - name: MYSQL_DATABASE
+chat/chat-backend-deployment.yaml:           valueFrom:
+chat/chat-backend-deployment.yaml:             secretKeyRef:
+chat/chat-backend-deployment.yaml:               name: chat-db-secret
+chat/chat-backend-deployment.yaml:               key: MYSQL_DATABASE
+chat/chat-backend-deployment.yaml:         ports:
+chat/chat-backend-deployment.yaml:         - containerPort: 88
+chat/chat-frontend-deployment.yaml: apiVersion: apps/v1
+chat/chat-frontend-deployment.yaml: kind: Deployment
+chat/chat-frontend-deployment.yaml: metadata:
+chat/chat-frontend-deployment.yaml:   name: chat-frontend
+chat/chat-frontend-deployment.yaml:   namespace: default
+chat/chat-frontend-deployment.yaml: spec:
+chat/chat-frontend-deployment.yaml:   replicas: 1
+chat/chat-frontend-deployment.yaml:   selector:
+chat/chat-frontend-deployment.yaml:     matchLabels:
+chat/chat-frontend-deployment.yaml:       app: chat-frontend
+chat/chat-frontend-deployment.yaml:   template:
+chat/chat-frontend-deployment.yaml:     metadata:
+chat/chat-frontend-deployment.yaml:       labels:
+chat/chat-frontend-deployment.yaml:         app: chat-frontend
+chat/chat-frontend-deployment.yaml:     spec:
+chat/chat-frontend-deployment.yaml:       containers:
+chat/chat-frontend-deployment.yaml:         - name: chat-frontend
+chat/chat-frontend-deployment.yaml:           image: localhost:5000/chat-frontend:latest
+chat/chat-frontend-deployment.yaml:           ports:
+chat/chat-frontend-deployment.yaml:             - containerPort: 90
+chat/chat-frontend-deployment.yaml:           resources:
+chat/chat-frontend-deployment.yaml:             requests:
+chat/chat-frontend-deployment.yaml:               memory: "64Mi"
+chat/chat-frontend-deployment.yaml:               cpu: "50m"
+chat/chat-frontend-deployment.yaml:             limits:
+chat/chat-frontend-deployment.yaml:               memory: "128Mi"
+chat/chat-frontend-deployment.yaml:               cpu: "100m"
+chat/chat-frontend-service.yaml: apiVersion: v1
+chat/chat-frontend-service.yaml: kind: Service
+chat/chat-frontend-service.yaml: metadata:
+chat/chat-frontend-service.yaml:   name: chat-frontend
+chat/chat-frontend-service.yaml:   namespace: default
+chat/chat-frontend-service.yaml: spec:
+chat/chat-frontend-service.yaml:   selector:
+chat/chat-frontend-service.yaml:     app: chat-frontend
+chat/chat-frontend-service.yaml:   ports:
+chat/chat-frontend-service.yaml:   - port: 90
+chat/chat-frontend-service.yaml:     targetPort: 90
+chat/chat-frontend-service.yaml:   type: ClusterIP
+chat/chat-db-service.yaml: apiVersion: v1
+chat/chat-db-service.yaml: kind: Service
+chat/chat-db-service.yaml: metadata:
+chat/chat-db-service.yaml:   name: chat-db
+chat/chat-db-service.yaml:   labels:
+chat/chat-db-service.yaml:     app: chat
+chat/chat-db-service.yaml:     tier: db
+chat/chat-db-service.yaml: spec:
+chat/chat-db-service.yaml:   ports:
+chat/chat-db-service.yaml:   - port: 3306
+chat/chat-db-service.yaml:     targetPort: 3306
+chat/chat-db-service.yaml:   selector:
+chat/chat-db-service.yaml:     app: chat
+chat/chat-db-service.yaml:     tier: db

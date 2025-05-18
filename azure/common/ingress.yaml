@@ -4,46 +4,34 @@ metadata:
   name: app-ingress
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/websocket-services: "chat-backend"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    nginx.ingress.kubernetes.io/connection-proxy-header: "keep-alive"
     nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
-    nginx.ingress.kubernetes.io/websocket-services: "chat-backend"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "upgrade";
-    nginx.ingress.kubernetes.io/server-snippet: |
-      access_log /var/log/nginx/access.log;
-      error_log /var/log/nginx/error.log debug;
-    nginx.ingress.kubernetes.io/rewrite-log: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
 spec:
-  ingressClassName: nginx
   rules:
-  - host: localhost
-    http:
+  - http:
       paths:
-      - path: /ws
-        pathType: Exact
-        backend:
-          service:
-            name: chat-backend
-            port:
-              number: 88
-      - path: /api
+      - path: /
         pathType: Prefix
         backend:
           service:
-            name: chat-backend
+            name: statamic-app
             port:
-              number: 88
-      - path: /chat/frontend
+              number: 80
+      - path: /ai
         pathType: Prefix
         backend:
           service:
-            name: chat-frontend
+            name: statamic-app
             port:
-              number: 90
+              number: 80
       - path: /ai-service
         pathType: Prefix
         backend:
@@ -51,17 +39,43 @@ spec:
             name: ai-frontend
             port:
               number: 91
-      - path: /ai-service/api
+      - path: /chat-client
+        pathType: Prefix
+        backend:
+          service:
+            name: chat-frontend
+            port:
+              number: 90
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: chat-backend
+            port:
+              number: 88
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-backend-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /ai-service/api(/|$)(.*)
         pathType: Prefix
         backend:
           service:
             name: ai-backend
             port:
               number: 89
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: cms-service
-            port:
-              number: 80
