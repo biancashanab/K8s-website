@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  ai-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-backend
+    ports:
+      - "89:89"
+    volumes:
+      - ai-backend-uploads:/app/uploads
+    restart: unless-stopped
+
+  ai-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-frontend
+    ports:
+      - "91:91"
+    environment:
+      - PORT=91
+      - API_URL=http://ai-backend:89/api
+    depends_on:
+      - ai-backend
+    restart: unless-stopped
+
+volumes:
+  ai-backend-uploads:

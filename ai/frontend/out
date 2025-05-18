@@ -1,0 +1,239 @@
+./src/test.ts: // This file is required by karma.conf.js and loads recursively all the .spec and framework files
+./src/test.ts: import 'zone.js/testing';
+./src/test.ts: import { getTestBed } from '@angular/core/testing';
+./src/test.ts: import {
+./src/test.ts:   BrowserDynamicTestingModule,
+./src/test.ts:   platformBrowserDynamicTesting
+./src/test.ts: } from '@angular/platform-browser-dynamic/testing';
+./src/test.ts: declare const require: {
+./src/test.ts:   context(path: string, deep?: boolean, filter?: RegExp): {
+./src/test.ts:     <T>(id: string): T;
+./src/test.ts:     keys(): string[];
+./src/test.ts:   };
+./src/test.ts: // First, initialize the Angular testing environment.
+./src/test.ts: getTestBed().initTestEnvironment(
+./src/test.ts:   BrowserDynamicTestingModule,
+./src/test.ts:   platformBrowserDynamicTesting(),
+./src/test.ts: // Then we find all the tests.
+./src/test.ts: const context = require.context('./', true, /\.spec\.ts$/);
+./src/test.ts: // And load the modules.
+./src/test.ts: context.keys().forEach(context);
+./src/polyfills.ts:  * This file includes polyfills needed by Angular and is loaded before the app.
+./src/polyfills.ts:  * You can add your own extra polyfills to this file.
+./src/polyfills.ts:  * This file is divided into 2 sections:
+./src/polyfills.ts:  *   1. Browser polyfills. These are applied before loading ZoneJS and are sorted by browsers.
+./src/polyfills.ts:  *   2. Application imports. Files imported after ZoneJS that should be loaded before your main
+./src/polyfills.ts:  *      file.
+./src/polyfills.ts:  * The current setup is for so-called "evergreen" browsers; the last versions of browsers that
+./src/polyfills.ts:  * automatically update themselves. This includes recent versions of Safari, Chrome (including
+./src/polyfills.ts:  * Opera), Edge, and Firefox. ES6+ features are used.
+./src/polyfills.ts: /***************************************************************************************************
+./src/polyfills.ts:  * BROWSER POLYFILLS
+./src/polyfills.ts: /***************************************************************************************************
+./src/polyfills.ts:  * Zone JS is required by default for Angular itself.
+./src/polyfills.ts: import 'zone.js';  // Included with Angular CLI.
+./src/polyfills.ts: /***************************************************************************************************
+./src/polyfills.ts:  * APPLICATION IMPORTS
+./src/main.ts: import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+./src/main.ts: import { AppModule } from './app/app.module';
+./src/main.ts: platformBrowserDynamic().bootstrapModule(AppModule)
+./src/main.ts:   .catch(err => console.error(err));
+./src/environments/environment.prod.ts: export const environment = {
+./src/environments/environment.prod.ts:   production: true,
+./src/environments/environment.prod.ts:   apiUrl: '/api'  // Handled by Nginx proxy
+./src/environments/environment.ts: export const environment = {
+./src/environments/environment.ts:   production: false,
+./src/environments/environment.ts:   apiUrl: 'http://localhost:89/api'  // Local development endpoint
+./src/app/app-routing.module.ts: import { NgModule } from '@angular/core';
+./src/app/app-routing.module.ts: import { RouterModule, Routes } from '@angular/router';
+./src/app/app-routing.module.ts: import { FileUploadComponent } from './components/file-upload/file-upload.component';
+./src/app/app-routing.module.ts: import { FileHistoryComponent } from './components/file-history/file-history.component';
+./src/app/app-routing.module.ts: const routes: Routes = [
+./src/app/app-routing.module.ts:   { path: '', redirectTo: '/upload', pathMatch: 'full' },
+./src/app/app-routing.module.ts:   { path: 'upload', component: FileUploadComponent },
+./src/app/app-routing.module.ts:   { path: 'history', component: FileHistoryComponent },
+./src/app/app-routing.module.ts:   { path: '**', redirectTo: '/upload' }
+./src/app/app-routing.module.ts: @NgModule({
+./src/app/app-routing.module.ts:   imports: [RouterModule.forRoot(routes)],
+./src/app/app-routing.module.ts:   exports: [RouterModule]
+./src/app/app-routing.module.ts: export class AppRoutingModule { }
+./src/app/models/file-record.model.ts: export interface FileRecord {
+./src/app/models/file-record.model.ts:   id: string;
+./src/app/models/file-record.model.ts:   fileName: string;
+./src/app/models/file-record.model.ts:   blobUrl: string;
+./src/app/models/file-record.model.ts:   uploadTimestamp: Date;
+./src/app/models/file-record.model.ts:   processingResult: string;
+./src/app/models/file-record.model.ts:   entities?: Entity[];
+./src/app/models/file-record.model.ts: export interface Entity {
+./src/app/models/file-record.model.ts:   text: string;
+./src/app/models/file-record.model.ts:   category: string;
+./src/app/models/file-record.model.ts:   confidence: number;
+./src/app/services/azure.service.ts: import { Injectable } from '@angular/core';
+./src/app/services/azure.service.ts: import { HttpClient } from '@angular/common/http';
+./src/app/services/azure.service.ts: import { Observable, of, from } from 'rxjs';
+./src/app/services/azure.service.ts: import { map, catchError, tap } from 'rxjs/operators';
+./src/app/services/azure.service.ts: @Injectable({
+./src/app/services/azure.service.ts:   providedIn: 'root'
+./src/app/services/azure.service.ts: export class AzureService {
+./src/app/services/azure.service.ts:   private apiUrl = 'http://localhost:9000/api'; // This will be proxied to the backend
+./src/app/services/azure.service.ts:   constructor(private http: HttpClient) { }
+./src/app/services/azure.service.ts:   // Upload file to Azure Blob Storage
+./src/app/services/azure.service.ts:   uploadFile(file: File): Observable<any> {
+./src/app/services/azure.service.ts:     const formData = new FormData();
+./src/app/services/azure.service.ts:     formData.append('file', file);
+./src/app/services/azure.service.ts:     return this.http.post(`${this.apiUrl}/upload`, formData).pipe(
+./src/app/services/azure.service.ts:       tap(response => console.log('File uploaded:', response)),
+./src/app/services/azure.service.ts:       catchError(this.handleError('uploadFile', {}))
+./src/app/services/azure.service.ts:     );
+./src/app/services/azure.service.ts:   // Get file processing history
+./src/app/services/azure.service.ts:   getFileHistory(): Observable<any[]> {
+./src/app/services/azure.service.ts:     return this.http.get<any[]>(`${this.apiUrl}/history`).pipe(
+./src/app/services/azure.service.ts:       tap(files => console.log('File history fetched:', files)),
+./src/app/services/azure.service.ts:       catchError(this.handleError<any[]>('getFileHistory', []))
+./src/app/services/azure.service.ts:     );
+./src/app/services/azure.service.ts:   // Get entity extraction results for a specific file
+./src/app/services/azure.service.ts:   getEntityExtractionResults(fileId: string): Observable<any> {
+./src/app/services/azure.service.ts:     return this.http.get<any>(`${this.apiUrl}/results/${fileId}`).pipe(
+./src/app/services/azure.service.ts:       tap(results => console.log('Entity extraction results:', results)),
+./src/app/services/azure.service.ts:       catchError(this.handleError('getEntityExtractionResults', {}))
+./src/app/services/azure.service.ts:     );
+./src/app/services/azure.service.ts:   /**
+./src/app/services/azure.service.ts:    * Handle Http operation that failed.
+./src/app/services/azure.service.ts:    * Let the app continue.
+./src/app/services/azure.service.ts:    * @param operation - name of the operation that failed
+./src/app/services/azure.service.ts:    * @param result - optional value to return as the observable result
+./src/app/services/azure.service.ts:    */
+./src/app/services/azure.service.ts:   private handleError<T>(operation = 'operation', result?: T) {
+./src/app/services/azure.service.ts:     return (error: any): Observable<T> => {
+./src/app/services/azure.service.ts:       console.error(`${operation} failed: ${error.message}`);
+./src/app/services/azure.service.ts:       
+./src/app/services/azure.service.ts:       // Let the app keep running by returning an empty result.
+./src/app/services/azure.service.ts:       return of(result as T);
+./src/app/services/azure.service.ts:     };
+./src/app/app.module.ts: import { NgModule } from '@angular/core';
+./src/app/app.module.ts: import { BrowserModule } from '@angular/platform-browser';
+./src/app/app.module.ts: import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+./src/app/app.module.ts: import { HttpClientModule } from '@angular/common/http';
+./src/app/app.module.ts: import { AppComponent } from './app.component';
+./src/app/app.module.ts: import { FileUploadComponent } from './components/file-upload/file-upload.component';
+./src/app/app.module.ts: import { FileHistoryComponent } from './components/file-history/file-history.component';
+./src/app/app.module.ts: import { AppRoutingModule } from './app-routing.module';
+./src/app/app.module.ts: @NgModule({
+./src/app/app.module.ts:   declarations: [
+./src/app/app.module.ts:     AppComponent,
+./src/app/app.module.ts:     FileUploadComponent,
+./src/app/app.module.ts:     FileHistoryComponent
+./src/app/app.module.ts:   ],
+./src/app/app.module.ts:   imports: [
+./src/app/app.module.ts:     BrowserModule,
+./src/app/app.module.ts:     FormsModule,
+./src/app/app.module.ts:     ReactiveFormsModule,
+./src/app/app.module.ts:     HttpClientModule,
+./src/app/app.module.ts:     AppRoutingModule
+./src/app/app.module.ts:   ],
+./src/app/app.module.ts:   providers: [],
+./src/app/app.module.ts:   bootstrap: [AppComponent]
+./src/app/app.module.ts: export class AppModule { }
+./src/app/app.component.ts: import { Component } from '@angular/core';
+./src/app/app.component.ts: @Component({
+./src/app/app.component.ts:   selector: 'app-root',
+./src/app/app.component.ts:   templateUrl: './app.component.html',
+./src/app/app.component.ts:   styleUrls: ['./app.component.css']
+./src/app/app.component.ts: export class AppComponent {
+./src/app/app.component.ts:   title = 'Entity Extraction AI App';
+./src/app/components/file-upload/file-upload.component.ts: import { Component, OnInit } from '@angular/core';
+./src/app/components/file-upload/file-upload.component.ts: import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+./src/app/components/file-upload/file-upload.component.ts: import { AzureService } from '../../services/azure.service';
+./src/app/components/file-upload/file-upload.component.ts: @Component({
+./src/app/components/file-upload/file-upload.component.ts:   selector: 'app-file-upload',
+./src/app/components/file-upload/file-upload.component.ts:   templateUrl: './file-upload.component.html',
+./src/app/components/file-upload/file-upload.component.ts:   styleUrls: ['./file-upload.component.css']
+./src/app/components/file-upload/file-upload.component.ts: export class FileUploadComponent implements OnInit {
+./src/app/components/file-upload/file-upload.component.ts:   uploadForm: FormGroup;
+./src/app/components/file-upload/file-upload.component.ts:   selectedFile: File | null = null;
+./src/app/components/file-upload/file-upload.component.ts:   isUploading = false;
+./src/app/components/file-upload/file-upload.component.ts:   uploadResult: any = null;
+./src/app/components/file-upload/file-upload.component.ts:   uploadError: string | null = null;
+./src/app/components/file-upload/file-upload.component.ts:   constructor(
+./src/app/components/file-upload/file-upload.component.ts:     private fb: FormBuilder,
+./src/app/components/file-upload/file-upload.component.ts:     private azureService: AzureService
+./src/app/components/file-upload/file-upload.component.ts:   ) {
+./src/app/components/file-upload/file-upload.component.ts:     this.uploadForm = this.fb.group({
+./src/app/components/file-upload/file-upload.component.ts:       file: [null, Validators.required]
+./src/app/components/file-upload/file-upload.component.ts:     });
+./src/app/components/file-upload/file-upload.component.ts:   ngOnInit(): void {
+./src/app/components/file-upload/file-upload.component.ts:   onFileSelected(event: Event): void {
+./src/app/components/file-upload/file-upload.component.ts:     const element = event.target as HTMLInputElement;
+./src/app/components/file-upload/file-upload.component.ts:     if (element.files && element.files.length > 0) {
+./src/app/components/file-upload/file-upload.component.ts:       this.selectedFile = element.files[0];
+./src/app/components/file-upload/file-upload.component.ts:       this.uploadForm.patchValue({ file: this.selectedFile });
+./src/app/components/file-upload/file-upload.component.ts:     }
+./src/app/components/file-upload/file-upload.component.ts:   onSubmit(): void {
+./src/app/components/file-upload/file-upload.component.ts:     if (this.uploadForm.invalid || !this.selectedFile) {
+./src/app/components/file-upload/file-upload.component.ts:       return;
+./src/app/components/file-upload/file-upload.component.ts:     }
+./src/app/components/file-upload/file-upload.component.ts:     this.isUploading = true;
+./src/app/components/file-upload/file-upload.component.ts:     this.uploadError = null;
+./src/app/components/file-upload/file-upload.component.ts:     this.uploadResult = null;
+./src/app/components/file-upload/file-upload.component.ts:     this.azureService.uploadFile(this.selectedFile)
+./src/app/components/file-upload/file-upload.component.ts:       .subscribe(
+./src/app/components/file-upload/file-upload.component.ts:         result => {
+./src/app/components/file-upload/file-upload.component.ts:           this.uploadResult = result;
+./src/app/components/file-upload/file-upload.component.ts:           this.isUploading = false;
+./src/app/components/file-upload/file-upload.component.ts:           this.resetForm();
+./src/app/components/file-upload/file-upload.component.ts:         },
+./src/app/components/file-upload/file-upload.component.ts:         error => {
+./src/app/components/file-upload/file-upload.component.ts:           this.uploadError = 'Error uploading file: ' + (error.message || 'Unknown error');
+./src/app/components/file-upload/file-upload.component.ts:           this.isUploading = false;
+./src/app/components/file-upload/file-upload.component.ts:         }
+./src/app/components/file-upload/file-upload.component.ts:       );
+./src/app/components/file-upload/file-upload.component.ts:   resetForm(): void {
+./src/app/components/file-upload/file-upload.component.ts:     this.uploadForm.reset();
+./src/app/components/file-upload/file-upload.component.ts:     this.selectedFile = null;
+./src/app/components/file-history/file-history.component.ts: import { Component, OnInit } from '@angular/core';
+./src/app/components/file-history/file-history.component.ts: import { AzureService } from '../../services/azure.service';
+./src/app/components/file-history/file-history.component.ts: @Component({
+./src/app/components/file-history/file-history.component.ts:   selector: 'app-file-history',
+./src/app/components/file-history/file-history.component.ts:   templateUrl: './file-history.component.html',
+./src/app/components/file-history/file-history.component.ts:   styleUrls: ['./file-history.component.css']
+./src/app/components/file-history/file-history.component.ts: export class FileHistoryComponent implements OnInit {
+./src/app/components/file-history/file-history.component.ts:   files: any[] = [];
+./src/app/components/file-history/file-history.component.ts:   selectedFile: any = null;
+./src/app/components/file-history/file-history.component.ts:   entityResults: any = null;
+./src/app/components/file-history/file-history.component.ts:   loading = false;
+./src/app/components/file-history/file-history.component.ts:   error: string | null = null;
+./src/app/components/file-history/file-history.component.ts:   constructor(private azureService: AzureService) { }
+./src/app/components/file-history/file-history.component.ts:   ngOnInit(): void {
+./src/app/components/file-history/file-history.component.ts:     this.loadFileHistory();
+./src/app/components/file-history/file-history.component.ts:   loadFileHistory(): void {
+./src/app/components/file-history/file-history.component.ts:     this.loading = true;
+./src/app/components/file-history/file-history.component.ts:     this.error = null;
+./src/app/components/file-history/file-history.component.ts:     
+./src/app/components/file-history/file-history.component.ts:     this.azureService.getFileHistory().subscribe(
+./src/app/components/file-history/file-history.component.ts:       (data) => {
+./src/app/components/file-history/file-history.component.ts:         this.files = data;
+./src/app/components/file-history/file-history.component.ts:         this.loading = false;
+./src/app/components/file-history/file-history.component.ts:       },
+./src/app/components/file-history/file-history.component.ts:       (error) => {
+./src/app/components/file-history/file-history.component.ts:         this.error = 'Failed to load file history. ' + (error.message || 'Unknown error');
+./src/app/components/file-history/file-history.component.ts:         this.loading = false;
+./src/app/components/file-history/file-history.component.ts:       }
+./src/app/components/file-history/file-history.component.ts:     );
+./src/app/components/file-history/file-history.component.ts:   viewEntityResults(file: any): void {
+./src/app/components/file-history/file-history.component.ts:     this.selectedFile = file;
+./src/app/components/file-history/file-history.component.ts:     this.loading = true;
+./src/app/components/file-history/file-history.component.ts:     this.error = null;
+./src/app/components/file-history/file-history.component.ts:     
+./src/app/components/file-history/file-history.component.ts:     this.azureService.getEntityExtractionResults(file.id).subscribe(
+./src/app/components/file-history/file-history.component.ts:       (data) => {
+./src/app/components/file-history/file-history.component.ts:         this.entityResults = data;
+./src/app/components/file-history/file-history.component.ts:         this.loading = false;
+./src/app/components/file-history/file-history.component.ts:       },
+./src/app/components/file-history/file-history.component.ts:       (error) => {
+./src/app/components/file-history/file-history.component.ts:         this.error = 'Failed to load entity extraction results. ' + (error.message || 'Unknown error');
+./src/app/components/file-history/file-history.component.ts:         this.loading = false;
+./src/app/components/file-history/file-history.component.ts:       }
+./src/app/components/file-history/file-history.component.ts:     );
+./src/app/components/file-history/file-history.component.ts:   clearSelection(): void {
+./src/app/components/file-history/file-history.component.ts:     this.selectedFile = null;
+./src/app/components/file-history/file-history.component.ts:     this.entityResults = null;
