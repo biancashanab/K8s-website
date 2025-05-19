@@ -92,9 +92,9 @@ spec:
         image: localhost:32000/ai-backend:latest
         ports:
         - containerPort: 89
-        envFrom:
-        - secretRef:
-            name: azure-credentials
+          # envFrom:
+          #- secretRef:
+          #  name: azure-credentials
         volumeMounts:
         - name: cors-script
           mountPath: /app/cors-script.js

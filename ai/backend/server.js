@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 const { BlobServiceClient } = require('@azure/storage-blob');
-const { TextAnalyticsClient, AzureKeyCredential } = require('@azure/ai-text-analytics');
+const { TextAnalysisClient, AzureKeyCredential } = require('@azure/ai-language-text');
 const sql = require('mssql');
 const fs = require('fs').promises;
 const path = require('path');
@@ -120,8 +120,8 @@ const initializeAzureClients = async () => {
     await containerClient.createIfNotExists();
     logger.info('Blob Storage container initialized');
 
-    // Initialize Text Analytics client
-    languageClient = new TextAnalyticsClient(
+    // Initialize Language Service client (new API)
+    languageClient = new TextAnalysisClient(
       azureConfig.languageEndpoint,
       new AzureKeyCredential(azureConfig.languageKey)
     );
@@ -190,23 +190,30 @@ const extractTextFromFile = (filePath) => {
   });
 };
 
-// Process text with Azure Text Analytics
+// Process text with Azure Language Service (using the correct API format)
 const processTextWithEntityExtraction = async (text) => {
   try {
     const trimmedText = text.length > 5000 ? text.substring(0, 5000) : text;
-    const documents = [trimmedText];
-    const results = await languageClient.recognizeEntities(documents);
-
-    if (!results || !results[0] || results[0].error || !results[0].entities) {
-      logger.warn('Entity extraction returned no entities or errored', { results });
-      return [];
+    
+    // Using direct entity recognition which is more stable
+    const result = await languageClient.analyze("EntityRecognition", [
+      { id: "1", text: trimmedText }
+    ], { 
+      includeStatistics: false,
+      modelVersion: "latest"
+    });
+    
+    // Process results
+    const entities = [];
+    if (result && result.length > 0 && result[0].entities) {
+      entities.push(...result[0].entities.map(entity => ({
+        text: entity.text,
+        category: entity.category,
+        confidenceScore: entity.confidenceScore
+      })));
     }
-
-    return results[0].entities.map(entity => ({
-      text: entity.text,
-      category: entity.category,
-      confidenceScore: entity.confidenceScore
-    }));
+    
+    return entities;
   } catch (error) {
     logger.error('Entity extraction error', { error: error.message });
     throw error;
@@ -258,11 +265,21 @@ app.get('/api/test-azure', async (req, res) => {
       if (pool) await pool.close();
     }
 
-    // Test Language Service
+    // Test Language Service (updated with correct API usage)
     try {
       const testText = 'Microsoft was founded by Bill Gates in Seattle.';
-      const results = await languageClient.recognizeEntities([testText]);
-      testResults.languageService = results[0].entities.length > 0 ? 'success' : 'failed: no entities found';
+      
+      // Using the analyze method directly instead of beginAnalyzeBatch
+      const result = await languageClient.analyze("EntityRecognition", [
+        { id: "1", text: testText }
+      ], {
+        includeStatistics: false,
+        modelVersion: "latest" 
+      });
+      
+      const entityCount = result && result.length > 0 && result[0].entities ? result[0].entities.length : 0;
+      
+      testResults.languageService = entityCount > 0 ? 'success' : 'failed: no entities found';
       logger.info('Language Service test passed');
     } catch (error) {
       testResults.languageService = `failed: ${error.message}`;
@@ -273,6 +290,36 @@ app.get('/api/test-azure', async (req, res) => {
   } catch (error) {
     logger.error('Azure services test failed', { error: error.message });
     res.status(500).json({ error: 'Failed to test Azure services', message: error.message });
+  }
+});
+
+// Add a direct test endpoint for the Language Service
+app.get('/api/test-language', async (req, res) => {
+  try {
+    const testText = req.query.text || 'Microsoft was founded by Bill Gates in Seattle.';
+    
+    // Using direct analyze method for simplicity and stability
+    const result = await languageClient.analyze("EntityRecognition", [
+      { id: "1", text: testText }
+    ], {
+      includeStatistics: false,
+      modelVersion: "latest"
+    });
+    
+    res.status(200).json({
+      success: true,
+      endpoint: azureConfig.languageEndpoint,
+      keyLength: azureConfig.languageKey.length,
+      results: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      code: error.code,
+      endpoint: azureConfig.languageEndpoint,
+      keyLength: azureConfig.languageKey?.length || 0
+    });
   }
 });
 

@@ -42,7 +42,6 @@ build_and_push "ai-backend" "$REPO_ROOT/ai/backend" "$REPO_ROOT/ai/backend/Docke
 
 # Push standard images
 STANDARD_IMAGES=(
-  "mongo"
   "mysql:latest"
 )
 

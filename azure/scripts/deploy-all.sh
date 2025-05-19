@@ -27,7 +27,7 @@ echo -e "${BLUE}Applying all resources in the correct order...${NC}"
 
 # 1. Apply secrets
 echo -e "${BLUE}1. Applying secrets...${NC}"
-$KUBECTL apply -f $K8S_DIR/azure-secret.yaml
+$KUBECTL apply -f $K8S_DIR/secrets/
 echo -e "${GREEN}Secrets applied successfully${NC}"
 
 # 2. Apply common resources

@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: '/api'  // Local development endpoint
+  apiUrl: '/ai-service/api'  // Local development endpoint
 };
